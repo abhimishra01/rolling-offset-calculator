@@ -1,8 +1,8 @@
 ---
-// The calculator. Inputs on the left, results and the diagram on the right.
+// The calculator. Inputs first, then results and the diagram (side by side on wide screens).
 // Result slots are always in the DOM, so the page never jumps while you type.
-import { TAKEOFF_45 } from '../lib/offset.js';
-const materials = Object.entries(TAKEOFF_45).map(([id, m]) => ({ id, label: m.label }));
+import { TAKEOFF } from '../lib/offset.js';
+const materials = TAKEOFF.map(({ id, label }) => ({ id, label }));
 const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
 ---
 <section id="tool" aria-label="Rolling offset calculator" data-mode="pipe"
@@ -19,29 +19,32 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label for="rise" class="lbl"><i class="sw sw-rise"></i>Rise</label>
-          <input id="rise" name="rise" type="text" inputmode="decimal" enterkeyhint="next" class="fld" value="12" aria-describedby="dim-hint" spellcheck="false" />
+          <input id="rise" name="rise" type="text" inputmode="decimal" enterkeyhint="next" class="fld" value="12" aria-describedby="dim-hint err" spellcheck="false" />
         </div>
         <div>
           <label for="roll" class="lbl"><i class="sw sw-roll"></i>Roll</label>
-          <input id="roll" name="roll" type="text" inputmode="decimal" enterkeyhint="done" class="fld" value="9" aria-describedby="dim-hint" spellcheck="false" />
+          <input id="roll" name="roll" type="text" inputmode="decimal" enterkeyhint="done" class="fld" value="9" aria-describedby="dim-hint err" spellcheck="false" />
         </div>
       </div>
-      <p id="dim-hint" class="-mt-3 text-sm text-muted">Inches, center to center. Type 12.5 or 12 1/2.</p>
+      <p id="dim-hint" class="-mt-3 text-sm text-muted">Inches, center to center. Type 12.5, 12 1/2 or 2'-3 1/2".</p>
+      <p id="err" class="-mt-3 min-h-[1.25rem] text-sm font-medium text-[var(--err)]" aria-live="polite"></p>
 
       <div id="frac" class="-mt-2">
-        <p class="text-sm font-medium">Add a fraction to <span id="frac-target" class="text-brand-ink">Rise</span></p>
+        <p class="text-sm font-medium">Set the fraction on <span id="frac-target" class="text-brand-ink">Rise</span> <span id="frac-msg" class="font-normal text-muted" role="status"></span></p>
         <div class="mt-1.5 grid grid-cols-7 gap-1.5" role="group" aria-label="Fraction buttons">
-          {fracs.map((f) => <button type="button" class="chip frac-btn" data-frac={f} aria-label={`Add ${f} inch`}>{f}</button>)}
+          {fracs.map((f) => <button type="button" class="chip frac-btn" data-frac={f} aria-label={`Set fraction ${f} inch`}>{f}</button>)}
         </div>
       </div>
 
       <fieldset>
         <legend class="lbl"><span id="angle-label">Fitting angle</span></legend>
         <div id="angle-chips" class="mt-1.5 flex flex-wrap gap-1.5" role="radiogroup" aria-labelledby="angle-label"></div>
-        <div class="mt-2 flex items-center gap-2">
-          <label for="angle-custom" class="text-sm text-muted">Other angle</label>
-          <input id="angle-custom" type="text" inputmode="decimal" class="fld fld-sm w-24" placeholder="e.g. 11.25" spellcheck="false" />
-          <span class="text-sm text-muted">degrees</span>
+        <div class="mt-2">
+          <label for="angle-custom" class="text-sm text-muted">Custom angle</label>
+          <div class="flex items-center gap-2">
+            <input id="angle-custom" type="text" inputmode="decimal" class="fld fld-sm w-28" placeholder="e.g. 11.25" spellcheck="false" aria-describedby="err" />
+            <span class="text-sm text-muted">degrees</span>
+          </div>
         </div>
       </fieldset>
 
@@ -53,7 +56,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
             <select id="material" class="fld fld-sm">
               <option value="">Not set</option>
               {materials.map((m) => <option value={m.id}>{m.label}</option>)}
-              <option value="custom">My own number</option>
+              <option value="custom">My number</option>
             </select>
           </div>
           <div>
@@ -65,7 +68,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
           <label for="takeoff" class="text-sm text-muted">Take-off per fitting (in)</label>
           <input id="takeoff" type="text" inputmode="decimal" class="fld fld-sm" placeholder="0" spellcheck="false" />
         </div>
-        <p class="text-xs text-muted">Typical sizes only. Fittings differ by maker, so measure yours when it counts.</p>
+        <p id="takeoff-note" class="text-xs text-muted"></p>
       </div>
 
       <div data-only="emt" class="space-y-2 rounded-xl border border-line p-3">
@@ -73,24 +76,25 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
         <input id="mark1" type="text" inputmode="decimal" class="fld fld-sm" placeholder="e.g. 10" spellcheck="false" />
       </div>
 
-      <p id="err" class="min-h-[1.25rem] text-sm font-medium text-[var(--err)]" role="alert"></p>
     </form>
 
     <!-- Results -->
     <div class="min-w-0">
-      <div id="results" aria-live="polite" aria-atomic="true">
+      <p id="sr-summary" class="sr-only" aria-live="polite"></p>
+      <div id="results">
         <dl class="grid grid-cols-2 gap-3">
           <div class="res res-main"><dt><i class="sw sw-offset"></i><span id="l-offset">True offset (set)</span></dt><dd><b id="v-offset">&ndash;</b><small id="d-offset">&nbsp;</small></dd></div>
           <div class="res res-main"><dt><i class="sw sw-travel"></i><span id="l-travel">Travel</span></dt><dd><b id="v-travel">&ndash;</b><small id="d-travel">&nbsp;</small></dd></div>
-          <div class="res"><dt><i class="sw sw-run"></i>Run</dt><dd><b id="v-run">&ndash;</b><small id="d-run">&nbsp;</small></dd></div>
+          <div class="res"><dt><i class="sw sw-run"></i><span id="l-run">Run</span></dt><dd><b id="v-run">&ndash;</b><small id="d-run">&nbsp;</small></dd></div>
           <div class="res res-key"><dt><span id="l-key">Cut length</span></dt><dd><b id="v-key">&ndash;</b><small id="d-key">&nbsp;</small></dd></div>
         </dl>
         <p id="note" class="mt-2 min-h-[2.5rem] text-sm text-muted"></p>
         <dl id="extra" class="mt-1 divide-y divide-line border-y border-line text-sm"></dl>
       </div>
 
-      <div class="mt-4 flex items-center gap-3">
-        <button type="button" id="copy" class="btn">Copy results</button>
+      <div class="mt-4 flex flex-wrap items-center gap-3">
+        <button type="button" id="copy" class="btn">Copy results as text</button>
+        <button type="button" id="reset" class="btn">Reset</button>
         <span id="copied" class="text-sm text-muted" role="status"></span>
       </div>
 
@@ -109,11 +113,20 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
           <circle id="dg-s" r="6.5" class="dg-end" /><circle id="dg-e" r="6.5" class="dg-end" />
           <g id="dg-labels" font-size="12.5"></g>
         </svg>
-        <figcaption class="px-1 pt-1 text-xs text-muted">Not to scale. Dots are the pipe center lines at each fitting. Travel is the long diagonal through the box.</figcaption>
+        <figcaption id="dg-cap" class="px-1 pt-1 text-xs text-muted">Not to scale. Dots are the pipe center lines at each fitting. Travel is the long diagonal through the box.</figcaption>
       </figure>
     </div>
   </div>
 </section>
+
+<!-- Phone only: keeps the answers on screen while you type. Hidden from screen readers (they use #sr-summary). -->
+<div id="sticky" aria-hidden="true" class="sticky-bar lg:hidden">
+  <div class="mx-auto grid max-w-5xl grid-cols-3 gap-2 px-4 py-2">
+    <div><span id="s-l1">True offset</span><b id="s-v1">&ndash;</b></div>
+    <div><span id="s-l2">Travel</span><b id="s-v2">&ndash;</b></div>
+    <div class="s-key"><span id="s-l3">Cut length</span><b id="s-v3">&ndash;</b></div>
+  </div>
+</div>
 
 <style is:global>
   #tool {
@@ -124,8 +137,11 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
   }
   #tool .lbl { display: flex; align-items: center; gap: .4rem; font-size: .875rem; font-weight: 600; }
   #tool .sw { display: inline-block; width: .7rem; height: .7rem; border-radius: 3px; flex: none; }
-  #tool .sw-rise { background: var(--c-rise); } .sw-roll { background: var(--c-roll); } .sw-run { background: var(--c-run); }
-  #tool .sw-offset { background: var(--c-offset); } .sw-travel { background: var(--c-travel); }
+  #tool .sw-rise { background: var(--c-rise); }
+  #tool .sw-roll { background: var(--c-roll); }
+  #tool .sw-run { background: var(--c-run); }
+  #tool .sw-offset { background: var(--c-offset); }
+  #tool .sw-travel { background: var(--c-travel); }
   #tool .fld { display: block; width: 100%; min-height: 3rem; margin-top: .3rem; padding: .5rem .75rem; border: 1px solid var(--line);
     border-radius: .75rem; background: var(--paper); color: var(--ink); font-size: 1.25rem; font-variant-numeric: tabular-nums; outline: none; }
   #tool .fld-sm { min-height: 2.75rem; font-size: 1rem; }
@@ -134,7 +150,9 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
   #tool .fld[aria-invalid="true"] { border-color: var(--err); }
   #tool .fld:disabled { opacity: .55; }
   #tool .seg button { min-height: 2.75rem; border-radius: .6rem; font-weight: 600; color: var(--muted); }
-  #tool .seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
+  #tool .seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .12); outline: 1px solid var(--line); }
+  :root[data-theme="dark"] #tool .seg { background: var(--paper); outline: 1px solid var(--line); }
+  :root[data-theme="dark"] #tool .seg button[aria-pressed="true"] { background: #26272c; }
   #tool .chip { min-height: 2.75rem; min-width: 2.75rem; padding: 0 .75rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--paper);
     color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; }
   #tool .chip:hover { border-color: var(--brand); }
@@ -147,7 +165,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
   #tool .res small { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 1.1rem; }
   #tool .res-main { background: var(--brand-soft); border-color: transparent; }
   #tool .res-key { background: var(--brand); border-color: var(--brand); }
-  #tool .res-key dt, #tool .res-key small { color: rgb(255 255 255 / .92); }
+  #tool .res-key dt, #tool .res-key small { color: #fff; }
   #tool .res-key b { color: #fff; }
   #extra > div { display: flex; justify-content: space-between; gap: 1rem; padding: .5rem 0; }
   #extra dt { color: var(--muted); } #extra dd { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
@@ -157,29 +175,43 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
     background-image: radial-gradient(color-mix(in oklab, var(--ink) 14%, transparent) 1px, transparent 1.2px); background-size: 16px 16px; }
   #tool[data-mode="pipe"] [data-only="emt"], #tool[data-mode="emt"] [data-only="pipe"] { display: none; }
   #tool .dg-ghost { stroke: var(--muted); opacity: .55; }
-  #tool .dg-roll { stroke: var(--c-roll); } .dg-rise { stroke: var(--c-rise); } .dg-run { stroke: var(--c-run); }
-  #tool .dg-offset { stroke: var(--c-offset); } .dg-travel { stroke: var(--c-travel); stroke-dasharray: 1 0; }
+  #tool .dg-roll { stroke: var(--c-roll); }
+  #tool .dg-rise { stroke: var(--c-rise); }
+  #tool .dg-run { stroke: var(--c-run); }
+  #tool .dg-offset { stroke: var(--c-offset); }
+  #tool .dg-travel { stroke: var(--c-travel); }
   #tool .dg-end { fill: var(--card); stroke: var(--c-travel); stroke-width: 3; }
   #dg-labels text { fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; font-variant-numeric: tabular-nums; }
   @media (max-width: 640px) { #dg-labels { font-size: 16px; } }
   #dg-labels .k { font-weight: 500; }
   #dg-labels .v { font-weight: 750; }
+  /* Phone only: answers stay on screen while you type. It slides in when the results are off screen. */
+  .sticky-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 15; background: color-mix(in oklab, var(--card) 96%, transparent);
+    border-top: 1px solid var(--line); box-shadow: 0 -4px 16px rgb(0 0 0 / .08); transform: translateY(110%); transition: transform .2s ease; font-variant-numeric: tabular-nums; }
+  .sticky-bar.on { transform: none; }
+  .sticky-bar span { display: block; font-size: .72rem; font-weight: 600; color: var(--muted); }
+  .sticky-bar b { display: block; font-size: 1.05rem; font-weight: 750; overflow-wrap: anywhere; }
+  .sticky-bar .s-key b { color: var(--brand-ink); }
+  @media (min-width: 1024px) { .sticky-bar { display: none; } }
 </style>
 
 <script>
-  import { parseLength, formatInches, calculate, takeoffFor, TAKEOFF_45 } from '../lib/offset.js';
+  import { parseLength, formatInches, calculate, takeoffFor, isApproximate, materialById } from '../lib/offset.js';
+  import { PRESETS, DEFAULT_ANGLE, parseAngle, applyFraction, fractionText, sanitizeSaved } from '../lib/inputs.js';
 
   const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
   const root = $('tool');
-  const PRESETS: Record<string, number[]> = { pipe: [22.5, 45, 60], emt: [10, 22.5, 30, 45, 60] };
   const inputs = { rise: $<HTMLInputElement>('rise'), roll: $<HTMLInputElement>('roll'), takeoff: $<HTMLInputElement>('takeoff'), mark1: $<HTMLInputElement>('mark1') };
   const customAngle = $<HTMLInputElement>('angle-custom');
   const material = $<HTMLSelectElement>('material');
   const size = $<HTMLSelectElement>('size');
   const fracTarget = $('frac-target');
+  const fracMsg = $('frac-msg');
   const NAMES: Record<string, string> = { rise: 'Rise', roll: 'Roll', takeoff: 'Take-off', mark1: 'First mark' };
+  const START = { rise: '12', roll: '9' };
 
-  const st = { mode: 'pipe', angle: { pipe: 45, emt: 30 } as Record<string, number | null>, customText: { pipe: '', emt: '' } as Record<string, string>, focus: 'rise' as keyof typeof inputs };
+  // angle[mode] is a number, or NaN while the custom field holds something that is not an angle.
+  const st = { mode: 'pipe', angle: { ...DEFAULT_ANGLE } as Record<string, number>, customText: { pipe: '', emt: '' } as Record<string, string>, focus: 'rise' as keyof typeof inputs };
 
   // ---- saved choices (a convenience only; the page works without it)
   const KEY = 'roc-v1';
@@ -191,33 +223,35 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
   }
   function load() {
     try {
-      const s = JSON.parse(localStorage.getItem(KEY) || 'null');
+      const s = sanitizeSaved(JSON.parse(localStorage.getItem(KEY) || 'null'));
       if (!s) return;
-      if (s.mode === 'pipe' || s.mode === 'emt') st.mode = s.mode;
-      if (s.angle) st.angle = { pipe: s.angle.pipe ?? 45, emt: s.angle.emt ?? 30 };
-      if (s.customText) st.customText = { pipe: s.customText.pipe || '', emt: s.customText.emt || '' };
-      for (const k of ['rise', 'roll', 'takeoff', 'mark1'] as const) if (typeof s[k] === 'string') inputs[k].value = s[k];
-      if (typeof s.material === 'string') material.value = s.material;
-      fillSizes(); if (typeof s.size === 'string' && [...size.options].some((o) => o.value === s.size)) size.value = s.size;
+      st.mode = s.mode; st.angle = s.angle; st.customText = s.customText;
+      for (const k of ['rise', 'roll', 'takeoff', 'mark1'] as const) inputs[k].value = s[k];
+      material.value = s.material;
+      fillSizes();
+      if ([...size.options].some((o) => o.value === s.size)) size.value = s.size;
     } catch {}
   }
 
   // ---- angle chips
   function renderAngles() {
     const box = $('angle-chips');
+    const presets = PRESETS[st.mode];
     const cur = st.angle[st.mode];
+    const anyChecked = presets.includes(cur);
     box.innerHTML = '';
-    PRESETS[st.mode].forEach((a) => {
+    presets.forEach((a, i) => {
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'chip'; b.setAttribute('role', 'radio');
-      b.setAttribute('aria-checked', String(cur === a)); b.tabIndex = cur === a || (cur === null && a === PRESETS[st.mode][0]) ? 0 : -1;
+      b.setAttribute('aria-checked', String(cur === a));
+      b.tabIndex = cur === a || (!anyChecked && i === 0) ? 0 : -1; // one tab stop, even when a custom angle is active
       b.textContent = a + '°'; b.dataset.angle = String(a);
       b.addEventListener('click', () => { st.angle[st.mode] = a; st.customText[st.mode] = ''; customAngle.value = ''; renderAngles(); onTakeoffSource(); update(); });
       b.addEventListener('keydown', (e) => {
-        const i = PRESETS[st.mode].indexOf(a); let j = -1;
-        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') j = (i + 1) % PRESETS[st.mode].length;
-        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') j = (i + PRESETS[st.mode].length - 1) % PRESETS[st.mode].length;
-        if (j >= 0) { e.preventDefault(); (box.children[j] as HTMLElement).focus(); (box.children[j] as HTMLElement).click(); (box.children[j] as HTMLElement).focus(); }
+        let j = -1;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') j = (i + 1) % presets.length;
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') j = (i + presets.length - 1) % presets.length;
+        if (j >= 0) { e.preventDefault(); (box.children[j] as HTMLElement).click(); ((box.children[j]) as HTMLElement).focus(); }
       });
       box.appendChild(b);
     });
@@ -225,48 +259,62 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
     customAngle.value = st.customText[st.mode];
   }
   customAngle.addEventListener('input', () => {
-    const v = parseFloat(customAngle.value.replace(',', '.'));
-    st.customText[st.mode] = customAngle.value;
-    st.angle[st.mode] = customAngle.value.trim() === '' ? PRESETS[st.mode][1] : (Number.isFinite(v) ? v : NaN);
-    if (customAngle.value.trim() === '') { renderAngles(); }
-    else document.querySelectorAll('#angle-chips .chip').forEach((c) => c.setAttribute('aria-checked', 'false'));
+    const text = customAngle.value;
+    st.customText[st.mode] = text;
+    st.angle[st.mode] = text.trim() === '' ? DEFAULT_ANGLE[st.mode] : parseAngle(text);
+    if (text.trim() === '') renderAngles();
+    else document.querySelectorAll('#angle-chips .chip').forEach((c) => c.setAttribute('aria-checked', String((c as HTMLElement).dataset.angle === String(st.angle[st.mode]))));
     onTakeoffSource(); update();
   });
 
   // ---- take-off table
   function fillSizes() {
-    const m = TAKEOFF_45[material.value as keyof typeof TAKEOFF_45];
+    const m = materialById(material.value);
     const prev = size.value;
     size.innerHTML = '';
     if (!m) { size.disabled = true; size.innerHTML = '<option value="">-</option>'; return; }
     size.disabled = false;
-    Object.keys(m.sizes).forEach((k) => { const o = document.createElement('option'); o.value = k; o.textContent = k.replace('-', ' ') + '"'; size.appendChild(o); });
-    if (prev && [...size.options].some((o) => o.value === prev)) size.value = prev; else size.value = Object.keys(m.sizes)[1] || Object.keys(m.sizes)[0];
+    m.sizes.forEach(([k]) => { const o = document.createElement('option'); o.value = k; o.textContent = k.replace('-', ' ') + '"'; size.appendChild(o); });
+    size.value = [...size.options].some((o) => o.value === prev) ? prev : m.defaultSize;
   }
-  function currentAngle(): number { const a = st.angle[st.mode]; return a == null ? NaN : a; }
+  function currentAngle(): number { return st.angle[st.mode]; }
+  /** Put the table take-off in the box. Exact fraction at 45 degrees; empty where the table has no honest value. */
   function onTakeoffSource() {
-    if (material.value in TAKEOFF_45) {
-      const v = takeoffFor(material.value, size.value, currentAngle());
-      inputs.takeoff.value = Number.isFinite(v) ? formatInches(Math.round(v * 16) / 16).frac.replace(/^0$/, '') : '';
-    } else if (material.value === '') inputs.takeoff.value = '';
+    if (!materialById(material.value)) return; // "Not set" and "My number" leave the box alone
+    const a = currentAngle();
+    const v = takeoffFor(material.value, size.value, a);
+    inputs.takeoff.value = !Number.isFinite(v) ? '' : a === 45 ? fractionText(v) : String(Math.round(v * 1000) / 1000);
   }
-  material.addEventListener('change', () => { fillSizes(); onTakeoffSource(); update(); });
+  /** Typing in the take-off box (or tapping a fraction on it) makes it "My number" so nothing overwrites it. */
+  function takeoffIsMine() { if (material.value !== 'custom') { material.value = 'custom'; fillSizes(); } }
+  material.addEventListener('change', () => { if (material.value === '') inputs.takeoff.value = ''; fillSizes(); onTakeoffSource(); update(); });
   size.addEventListener('change', () => { onTakeoffSource(); update(); });
-  inputs.takeoff.addEventListener('input', () => { if (material.value in TAKEOFF_45) { material.value = 'custom'; fillSizes(); } });
+  inputs.takeoff.addEventListener('input', takeoffIsMine);
+
+  function takeoffNote(): string {
+    const m = materialById(material.value);
+    if (!m) return 'Center of the fitting to the bottom of the socket. Pick a pipe and size, or type your own number.';
+    const a = currentAngle();
+    const src = `Source: ${m.source}. Other makers differ, so measure yours when it counts.`;
+    if (m.onlyAt45 && a !== 45) return `No catalog value for ${Number.isFinite(a) ? Math.round(a * 100) / 100 + '°' : 'this angle'}: the catalog lists 45° fittings only. Type your own take-off. ${src}`;
+    if (isApproximate(m.id, a)) return `Scaled from the 45° value, so approximate. Check your fitting. ${src}`;
+    return m.id === 'steel' ? `${src} The root gap (about 1/8 in per weld) is not included.` : src;
+  }
 
   // ---- fraction buttons act on the last field you used
   (Object.keys(inputs) as (keyof typeof inputs)[]).forEach((k) => {
-    inputs[k].addEventListener('focus', () => { st.focus = k; fracTarget.textContent = NAMES[k]; });
-    inputs[k].addEventListener('input', update);
+    inputs[k].addEventListener('focus', () => { st.focus = k; fracTarget.textContent = NAMES[k]; fracMsg.textContent = ''; });
+    inputs[k].addEventListener('input', () => { fracMsg.textContent = ''; update(); });
   });
   document.querySelectorAll<HTMLButtonElement>('.frac-btn').forEach((b) => {
     b.addEventListener('pointerdown', (e) => e.preventDefault());
     b.addEventListener('click', () => {
       const el = inputs[st.focus];
-      const whole = Math.floor(parseLength(el.value.replace(/\s*\d+\/\d+\s*$/, '').trim() || '0') || 0);
-      const same = new RegExp('\\s' + b.dataset.frac!.replace('/', '\\/') + '$').test(el.value.trim());
-      el.value = same ? String(whole) : `${whole} ${b.dataset.frac}`;
-      if (st.focus === 'takeoff' && material.value in TAKEOFF_45) { material.value = 'custom'; fillSizes(); }
+      const next = applyFraction(el.value, b.dataset.frac!);
+      if (next === null) { fracMsg.textContent = 'Clear the decimal first. The buttons need a whole number.'; return; }
+      fracMsg.textContent = '';
+      el.value = next;
+      if (st.focus === 'takeoff') takeoffIsMine();
       update();
     });
   });
@@ -276,104 +324,151 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
   function setMode(m: string) {
     st.mode = m; root.dataset.mode = m;
     document.querySelectorAll<HTMLButtonElement>('[data-mode-btn]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.modeBtn === m)));
-    if (!(st.focus in inputs) || (m === 'emt' && st.focus === 'takeoff') || (m === 'pipe' && st.focus === 'mark1')) { st.focus = 'rise'; fracTarget.textContent = 'Rise'; }
+    if ((m === 'emt' && st.focus === 'takeoff') || (m === 'pipe' && st.focus === 'mark1')) { st.focus = 'rise'; fracTarget.textContent = 'Rise'; }
+    fracMsg.textContent = '';
     renderAngles(); onTakeoffSource(); update();
   }
 
+  // ---- reset
+  $('reset').addEventListener('click', () => {
+    inputs.rise.value = START.rise; inputs.roll.value = START.roll; inputs.takeoff.value = ''; inputs.mark1.value = '';
+    material.value = ''; fillSizes();
+    st.angle = { ...DEFAULT_ANGLE }; st.customText = { pipe: '', emt: '' };
+    fracMsg.textContent = '';
+    renderAngles(); update();
+  });
+
   // ---- calculation and output
-  const set = (id: string, frac: string, dec: string) => { $(id.replace('d-', 'v-')).textContent = frac || '–'; $(id).textContent = dec || ' '; };
+  const set = (name: string, frac: string, dec: string) => { $('v-' + name).textContent = frac || '–'; $('d-' + name).textContent = dec || ' '; };
   const fmt = (x: number) => formatInches(x);
   const q = (x: number) => { const f = fmt(x); return `${f.frac}" (${f.dec}")`; };
   let lastText = '';
+  let srTimer = 0;
 
-  function field(el: HTMLInputElement, allowEmpty: boolean): number {
+  /** Read a length field. Empty is NaN here; the caller decides what empty means. */
+  function field(el: HTMLInputElement): number {
     const raw = el.value.trim();
-    if (!raw) { el.setAttribute('aria-invalid', 'false'); return allowEmpty ? NaN : NaN; }
+    if (!raw) { el.setAttribute('aria-invalid', 'false'); return NaN; }
     const v = parseLength(raw);
     el.setAttribute('aria-invalid', String(!Number.isFinite(v)));
     return v;
   }
+  const bad = (el: HTMLInputElement) => el.getAttribute('aria-invalid') === 'true';
 
   function update() {
-    const rise = field(inputs.rise, false), roll = field(inputs.roll, false);
-    const takeoff = st.mode === 'pipe' ? field(inputs.takeoff, true) : 0;
-    const mark1 = st.mode === 'emt' ? field(inputs.mark1, true) : NaN;
-    const angle = currentAngle();
-    const problems: string[] = [];
-    if (inputs.rise.getAttribute('aria-invalid') === 'true') problems.push('Rise: enter a number like 12, 12.5 or 12 1/2.');
-    if (inputs.roll.getAttribute('aria-invalid') === 'true') problems.push('Roll: enter a number like 9, 9.25 or 9 1/4.');
-    if (st.mode === 'pipe' && inputs.takeoff.getAttribute('aria-invalid') === 'true') problems.push('Take-off: enter a number like 3/8 or 0.375.');
-    if (st.mode === 'emt' && inputs.mark1.getAttribute('aria-invalid') === 'true') problems.push('First mark: enter a number like 10 or 10 1/2.');
-    if (!Number.isFinite(angle) || angle <= 0 || angle >= 90) problems.push('Angle: use a number above 0 and below 90.');
-    $('err').textContent = problems[0] || '';
-    customAngle.setAttribute('aria-invalid', String(!Number.isFinite(angle) || angle <= 0 || angle >= 90));
-
-    const r = Number.isFinite(rise) ? rise : (inputs.rise.value.trim() === '' ? 0 : NaN);
-    const l = Number.isFinite(roll) ? roll : (inputs.roll.value.trim() === '' ? 0 : NaN);
-    const c = calculate({ rise: r, roll: l, angle, takeoff: Number.isFinite(takeoff) ? takeoff : 0, firstMark: mark1 });
     const emt = st.mode === 'emt';
+    const riseV = field(inputs.rise), rollV = field(inputs.roll);
+    const takeoffV = emt ? NaN : field(inputs.takeoff);
+    const mark1 = emt ? field(inputs.mark1) : NaN;
+    const angle = currentAngle();
+    const angleBad = !(angle > 0 && angle < 90);
+    const problems: string[] = [];
+    if (bad(inputs.rise)) problems.push('Rise: enter a number like 12, 12.5 or 12 1/2.');
+    if (bad(inputs.roll)) problems.push('Roll: enter a number like 9, 9.25 or 9 1/4.');
+    if (!emt && bad(inputs.takeoff)) problems.push('Take-off: enter a number like 3/8 or 0.375.');
+    if (emt && bad(inputs.mark1)) problems.push('First mark: enter a number like 10 or 10 1/2.');
+    if (angleBad) problems.push('Angle: use a number above 0 and below 90.');
+    $('err').textContent = problems.join(' ');
+    customAngle.setAttribute('aria-invalid', String(angleBad && customAngle.value.trim() !== ''));
+    $('takeoff-note').textContent = takeoffNote();
+
+    // Any invalid field blanks the results. An empty rise or roll counts as 0.
+    const rise = Number.isNaN(riseV) && !bad(inputs.rise) ? 0 : riseV;
+    const roll = Number.isNaN(rollV) && !bad(inputs.roll) ? 0 : rollV;
+    const c = problems.length ? null : calculate({ rise, roll, angle, takeoff: Number.isNaN(takeoffV) ? 0 : takeoffV, firstMark: mark1 });
+
     $('l-travel').textContent = emt ? 'Distance between bends' : 'Travel';
+    $('l-run').textContent = emt ? 'Multiplier' : 'Run';
     $('l-key').textContent = emt ? 'Total shrink' : 'Cut length';
-    const extra = $('extra'); const rows: [string, string][] = [];
+    $('dg-cap').textContent = emt
+      ? 'Not to scale. Dots are the two bend points on the conduit. The long diagonal is the distance between the bends.'
+      : 'Not to scale. Dots are the pipe center lines at each fitting. Travel is the long diagonal through the box.';
+    const rows: [string, string][] = [];
     let note = '';
     if (!c) {
-      ['d-offset', 'd-travel', 'd-run', 'd-key'].forEach((id) => set(id, '', ''));
-      note = problems.length ? '' : 'Enter a rise and a roll to see the answers.';
+      ['offset', 'travel', 'run', 'key'].forEach((n) => set(n, '', ''));
+      note = problems.length ? 'Fix the field marked in red to see the answers.' : 'Enter a rise and a roll to see the answers.';
       lastText = '';
-      drawDiagram(null, 0, 0);
+      drawDiagram(null, 0, 0, emt);
     } else {
-      set('d-offset', fmt(c.trueOffset).text, fmt(c.trueOffset).dec + ' in');
-      set('d-travel', fmt(c.travel).text, fmt(c.travel).dec + ' in');
-      set('d-run', fmt(c.run).text, fmt(c.run).dec + ' in');
+      set('offset', fmt(c.trueOffset).text, fmt(c.trueOffset).dec + ' in');
+      set('travel', fmt(c.travel).text, fmt(c.travel).dec + ' in');
+      const tilt = c.offsetAngle.toFixed(1) + '°';
       if (emt) {
-        set('d-key', fmt(c.shrink).text, fmt(c.shrink).dec + ' in');
-        rows.push(['Multiplier', c.multiplier.toFixed(3)]);
-        rows.push(['Shrink per inch of offset', `${fmt(c.shrinkPerInch).text} (${c.shrinkPerInch.toFixed(3)})`]);
+        set('run', c.multiplier.toFixed(3), 'travel = true offset x this');
+        set('key', fmt(c.shrink).text, fmt(c.shrink).dec + ' in');
+        rows.push(['Shrink per inch of offset', c.shrinkPerInch.toFixed(3) + ' in']);
         if (Number.isFinite(c.mark1)) { rows.push(['Mark 1', q(c.mark1)]); rows.push(['Mark 2 (mark 1 + distance)', q(c.mark2)]); }
-        rows.push(['Offset direction from rise', c.offsetAngle.toFixed(1) + '°']);
-        note = `Space the two bends ${fmt(c.travel).text} apart. Add ${fmt(c.shrink).text} of shrink to your overall length.`;
+        rows.push(['Bend plane tilt from rise', tilt]);
+        note = `Both bends lie in one plane, tilted ${tilt} from the rise direction. Make bend 1, turn the conduit 180°, then make bend 2 ${fmt(c.travel).text} from the first. Add ${fmt(c.shrink).text} of shrink to your overall length.`;
       } else {
-        set('d-key', fmt(c.cut).text, fmt(c.cut).dec + ' in');
+        set('run', fmt(c.run).text, fmt(c.run).dec + ' in');
+        set('key', fmt(c.cut).text, fmt(c.cut).dec + ' in');
         if (c.takeoff > 0) rows.push(['Take-off per fitting', q(c.takeoff)]);
         rows.push(['Fitting angle', (Math.round(angle * 100) / 100) + '°']);
-        rows.push(['Offset direction from rise', c.offsetAngle.toFixed(1) + '°']);
-        note = c.takeoff > 0 ? (c.cut <= 0 ? 'The take-offs are longer than the travel. Check the numbers.' : `Cut length is the travel minus two take-offs of ${fmt(c.takeoff).text}.`)
+        const missing = materialById(material.value) && Number.isNaN(takeoffFor(material.value, size.value, angle));
+        note = missing ? 'No catalog take-off at this angle, so cut length equals travel until you type your own take-off.'
+          : c.takeoff > 0 ? (c.cut <= 0 ? 'The take-offs are longer than the travel. Check the numbers.' : `Cut length is the travel minus two take-offs of ${fmt(c.takeoff).text}.`)
           : 'No take-off set, so cut length equals travel (center to center). Pick a pipe and size to subtract the fittings.';
       }
       lastText = [
-        `Rolling offset (${emt ? 'EMT conduit' : 'pipe'}): rise ${fmt(r).frac}", roll ${fmt(l).frac}", ${Math.round(angle * 100) / 100} degrees`,
+        `Rolling offset (${emt ? 'EMT conduit' : 'pipe'}): rise ${fmt(rise).frac}", roll ${fmt(roll).frac}", ${Math.round(angle * 100) / 100} degrees`,
         `True offset: ${q(c.trueOffset)}`,
         emt ? `Distance between bends: ${q(c.travel)}` : `Travel: ${q(c.travel)}`,
-        `Run: ${q(c.run)}`,
+        emt ? `Multiplier: ${c.multiplier.toFixed(3)}` : `Run: ${q(c.run)}`,
         emt ? `Total shrink: ${q(c.shrink)}` : `Cut length: ${q(c.cut)}${c.takeoff > 0 ? ` (take-off ${fmt(c.takeoff).frac}" per fitting)` : ''}`,
       ].join('\n');
-      drawDiagram(c, r, l);
+      drawDiagram(c, rise, roll, emt);
     }
-    extra.innerHTML = rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+    $('extra').innerHTML = rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
     $('note').textContent = note;
+    updateSummary(c, emt);
     save();
   }
 
+  /** Phone bar and screen reader line. The screen reader line waits for a pause in typing. */
+  function updateSummary(c: ReturnType<typeof calculate>, emt: boolean) {
+    $('s-l2').textContent = emt ? 'Between bends' : 'Travel';
+    $('s-l3').textContent = emt ? 'Total shrink' : 'Cut length';
+    $('s-v1').textContent = c ? fmt(c.trueOffset).text : '–';
+    $('s-v2').textContent = c ? fmt(c.travel).text : '–';
+    $('s-v3').textContent = c ? fmt(emt ? c.shrink : c.cut).text : '–';
+    clearTimeout(srTimer);
+    srTimer = window.setTimeout(() => {
+      $('sr-summary').textContent = c ? (emt ? `True offset ${fmt(c.trueOffset).text}. Distance between bends ${fmt(c.travel).text}. Total shrink ${fmt(c.shrink).text}.`
+        : `True offset ${fmt(c.trueOffset).text}. Travel ${fmt(c.travel).text}. Cut length ${fmt(c.cut).text}.`) : '';
+    }, 500);
+  }
+  // Show the phone bar only while the calculator is on screen and its own results are not.
+  {
+    const bar = $('sticky'); let toolOn = false, resultsOn = true;
+    const sync = () => bar.classList.toggle('on', toolOn && !resultsOn);
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver((e) => { toolOn = e[e.length - 1].isIntersecting; sync(); }).observe(root);
+      new IntersectionObserver((e) => { resultsOn = e[e.length - 1].isIntersecting; sync(); }).observe($('results'));
+    }
+  }
+
   // ---- diagram: an oblique box. Roll runs right, rise runs up, run runs back.
-  const NS = 'http://www.w3.org/2000/svg';
-  function drawDiagram(c: ReturnType<typeof calculate>, rise: number, roll: number) {
-    const lines = $('dg-lines'); const labels = $('dg-labels'); const box = $('dg-box');
+  function drawDiagram(c: ReturnType<typeof calculate>, rise: number, roll: number, emt: boolean) {
+    const labels = $('dg-labels'); const box = $('dg-box');
     const ids = ['roll', 'rise', 'run', 'offset', 'travel'];
     if (!c) { ids.forEach((i) => $('dg-' + i).setAttribute('opacity', '0')); labels.innerHTML = ''; box.innerHTML = ''; $('dg-s').setAttribute('opacity', '0'); $('dg-e').setAttribute('opacity', '0'); return; }
     ids.forEach((i) => $('dg-' + i).setAttribute('opacity', '1')); $('dg-s').setAttribute('opacity', '1'); $('dg-e').setAttribute('opacity', '1');
     const mx = Math.max(roll, rise, c.run) || 1;
     let w = Math.max(roll, 0.14 * mx), h = Math.max(rise, 0.14 * mx), d = Math.max(c.run, 0.14 * mx);
-    if (roll === 0) w = 0; if (rise === 0) h = 0;
-    const kx = 0.6, ky = 0.4;
+    if (roll === 0) w = 0;
+    if (rise === 0) h = 0;
+    const kx = 0.6, ky = 0.4; // oblique tilt of the run axis
     const s = Math.min(290 / (w + kx * d || 1), 150 / (h + ky * d || 1));
     w *= s; h *= s; d *= s;
     const O = { x: 44 + (290 - (w + kx * d)) / 2, y: 218 };
     const P = (x: number, y: number, z: number) => [O.x + x + kx * z, O.y - y - ky * z];
-    const S = P(0, 0, 0), A = P(w, 0, 0), B = P(w, h, 0), E = P(w, h, d);
+    const start = P(0, 0, 0), afterRoll = P(w, 0, 0), afterRise = P(w, h, 0), end = P(w, h, d);
     const L = (id: string, a: number[], b: number[]) => { const e = $(id); e.setAttribute('x1', a[0].toFixed(1)); e.setAttribute('y1', a[1].toFixed(1)); e.setAttribute('x2', b[0].toFixed(1)); e.setAttribute('y2', b[1].toFixed(1)); };
-    L('dg-roll', S, A); L('dg-rise', A, B); L('dg-run', B, E); L('dg-offset', S, B); L('dg-travel', S, E);
-    $('dg-s').setAttribute('cx', S[0].toFixed(1)); $('dg-s').setAttribute('cy', S[1].toFixed(1));
-    $('dg-e').setAttribute('cx', E[0].toFixed(1)); $('dg-e').setAttribute('cy', E[1].toFixed(1));
+    L('dg-roll', start, afterRoll); L('dg-rise', afterRoll, afterRise); L('dg-run', afterRise, end); L('dg-offset', start, afterRise); L('dg-travel', start, end);
+    $('dg-s').setAttribute('cx', start[0].toFixed(1)); $('dg-s').setAttribute('cy', start[1].toFixed(1));
+    $('dg-e').setAttribute('cx', end[0].toFixed(1)); $('dg-e').setAttribute('cy', end[1].toFixed(1));
     const c8 = [P(0, 0, 0), P(w, 0, 0), P(w, h, 0), P(0, h, 0), P(0, 0, d), P(w, 0, d), P(w, h, d), P(0, h, d)];
     const edges = [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]];
     box.innerHTML = edges.map(([i, j]) => `<line x1="${c8[i][0].toFixed(1)}" y1="${c8[i][1].toFixed(1)}" x2="${c8[j][0].toFixed(1)}" y2="${c8[j][1].toFixed(1)}"/>`).join('');
@@ -381,16 +476,49 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
     const T = (p: number[], dx: number, dy: number, anchor: string, k: string, v: string, color: string) =>
       `<text x="${(p[0] + dx).toFixed(1)}" y="${(p[1] + dy).toFixed(1)}" text-anchor="${anchor}"><tspan class="k">${k} </tspan><tspan class="v" style="fill:${color}">${v}</tspan></text>`;
     labels.innerHTML =
-      T(mid(S, A), 0, 20, 'middle', 'Roll', fmt(roll).frac + '"', 'var(--c-roll)') +
-      T(mid(A, B), 10, 5, 'start', 'Rise', fmt(rise).frac + '"', 'var(--c-rise)') +
-      T(mid(B, E), -6, -8, 'end', 'Run', fmt(c.run).frac + '"', 'var(--c-run)') +
-      T(mid(S, B), -9, -7, 'end', 'True offset', fmt(c.trueOffset).frac + '"', 'var(--c-offset)') +
-      T([S[0] + 0.7 * (E[0] - S[0]), S[1] + 0.7 * (E[1] - S[1])], 12, 20, 'start', 'Travel', fmt(c.travel).frac + '"', 'var(--ink)');
+      (roll > 0 ? T(mid(start, afterRoll), 0, 20, 'middle', 'Roll', fmt(roll).frac + '"', 'var(--c-roll)') : '') +
+      (rise > 0 ? T(mid(afterRoll, afterRise), 10, 5, 'start', 'Rise', fmt(rise).frac + '"', 'var(--c-rise)') : '') +
+      T(mid(afterRise, end), -6, -8, 'end', 'Run', fmt(c.run).frac + '"', 'var(--c-run)') +
+      T(mid(start, afterRise), -9, -7, 'end', 'True offset', fmt(c.trueOffset).frac + '"', 'var(--c-offset)') +
+      T([start[0] + 0.7 * (end[0] - start[0]), start[1] + 0.7 * (end[1] - start[1])], 12, 20, 'start', emt ? 'Between bends' : 'Travel', fmt(c.travel).frac + '"', 'var(--ink)');
+    fitLabels(labels);
+  }
+
+  /** Keep every label inside the picture, and push apart labels that overlap. Uses the real text size. */
+  function fitLabels(group: HTMLElement) {
+    const texts = [...group.querySelectorAll('text')] as unknown as SVGTextElement[];
+    const W = 400, H = 250, M = 4;
+    const move = (t: SVGTextElement, dx: number, dy: number) => {
+      t.setAttribute('x', String(+t.getAttribute('x')! + dx)); t.setAttribute('y', String(+t.getAttribute('y')! + dy));
+    };
+    texts.forEach((t) => {
+      const b = t.getBBox();
+      if (b.x < M) move(t, M - b.x, 0); else if (b.x + b.width > W - M) move(t, W - M - (b.x + b.width), 0);
+      const b2 = t.getBBox();
+      if (b2.y < M) move(t, 0, M - b2.y); else if (b2.y + b2.height > H - M) move(t, 0, H - M - (b2.y + b2.height));
+    });
+    for (let pass = 0; pass < 4; pass++) {
+      let moved = false;
+      for (let i = 0; i < texts.length; i++) for (let j = i + 1; j < texts.length; j++) {
+        const a = texts[i].getBBox(), b = texts[j].getBBox();
+        const ox = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
+        const oy = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
+        if (ox > 0 && oy > -1) {
+          const down = b.y >= a.y ? 1 : -1; // push the lower label down, the upper one up
+          const target = down > 0 ? texts[j] : texts[i];
+          move(target, 0, down * (oy + 2));
+          const nb = target.getBBox();
+          if (nb.y < M || nb.y + nb.height > H - M) move(target, 0, -down * (oy + 2) * 2); // no room that way: go the other way
+          moved = true;
+        }
+      }
+      if (!moved) break;
+    }
   }
 
   // ---- copy
   $('copy').addEventListener('click', async () => {
-    if (!lastText) return;
+    if (!lastText) { $('copied').textContent = 'Nothing to copy yet'; setTimeout(() => { $('copied').textContent = ''; }, 2000); return; }
     let ok = false;
     try { await navigator.clipboard.writeText(lastText); ok = true; } catch {
       const t = document.createElement('textarea'); t.value = lastText; document.body.appendChild(t); t.select();
@@ -403,10 +531,8 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
   // ---- start
   load();
   fillSizes();
-  if (!['pipe', 'emt'].includes(st.mode)) st.mode = 'pipe';
   root.dataset.mode = st.mode;
   document.querySelectorAll<HTMLButtonElement>('[data-mode-btn]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.modeBtn === st.mode)));
   renderAngles();
-  if (st.angle[st.mode] != null && !PRESETS[st.mode].includes(st.angle[st.mode] as number)) customAngle.value = st.customText[st.mode];
   update();
 </script>

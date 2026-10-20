@@ -14,6 +14,8 @@ const jsonLd = [
     name: site.name,
     url: `${base}/`,
     description: site.description,
+    image: `${base}/${site.ogImage}`,
+    featureList: ['True offset, travel and run', 'Cut length after fitting take-off', 'Pipe take-off from catalog values', 'EMT conduit mode with multiplier and shrink', 'Fractions and feet-inches input', 'Labeled diagram'],
     applicationCategory: site.category,
     operatingSystem: 'Any',
     browserRequirements: 'Requires JavaScript',
@@ -39,12 +41,6 @@ const jsonLd = [
     </h1>
     <p class="mt-4 max-w-2xl text-lg text-muted">{site.description}</p>
     <div class="mt-8 min-h-[22rem]"><Tool /></div>
-    <p class="mt-6 text-sm text-muted">
-      <a href="/about/" class="underline underline-offset-4 hover:text-ink">About</a> &middot;
-      <a href="/privacy/" class="underline underline-offset-4 hover:text-ink">Privacy Policy</a> &middot;
-      <a href="/terms/" class="underline underline-offset-4 hover:text-ink">Terms</a> &middot;
-      <a href="/contact/" class="underline underline-offset-4 hover:text-ink">Contact</a>
-    </p>
   </section>
   <Article />
   <Faq />

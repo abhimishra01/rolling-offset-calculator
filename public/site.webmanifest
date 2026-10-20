@@ -2,12 +2,13 @@
   "name": "Rolling Offset Calculator",
   "short_name": "Offset Calc",
   "description": "Rolling offset calculator for pipe and EMT conduit.",
-  "start_url": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f7f6f2",
-  "theme_color": "#b4540a",
+  "theme_color": "#a84c08",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }

@@ -1,5 +1,13 @@
 ---
-// SEO article. Plain text, written for tradespeople.
+// SEO article. Plain text, written for tradespeople. The take-off chart is built from src/lib/offset.js, so it cannot drift from the tool.
+import { TAKEOFF } from '../lib/offset.js';
+import { fractionText } from '../lib/inputs.js';
+const sizeKey = (s: string) => s.split("-").reduce((a, p) => a + (p.includes("/") ? +p.split("/")[0] / +p.split("/")[1] : +p), 0);
+const allSizes = [...new Set(TAKEOFF.flatMap((m) => m.sizes.map(([s]) => s)))].sort((a, b) => sizeKey(a) - sizeKey(b));
+const cell = (id: string, size: string) => {
+  const row = TAKEOFF.find((m) => m.id === id)!.sizes.find(([s]) => s === size);
+  return row ? `${fractionText(row[1])} (${row[1].toFixed(3)})` : '-';
+};
 ---
 <section aria-labelledby="about-tool" class="mx-auto max-w-5xl px-4 pt-16">
   <article class="prose-site">
@@ -18,8 +26,8 @@
     <h2>How to use the calculator</h2>
     <ol>
       <li>Measure the rise and the roll from center line to center line, in inches.</li>
-      <li>Type them in. Use decimals such as 12.5, or fractions such as 12 1/2. The fraction buttons add 1/8 inch steps on a phone.</li>
-      <li>Pick the fitting angle: 22.5, 45 or 60 degrees, or type your own.</li>
+      <li>Type them in. Use decimals such as 12.5, or fractions such as 12 1/2. You can also type feet and inches, such as 2'-3 1/2". The fraction buttons set the fraction on the field you used last.</li>
+      <li>Pick the fitting angle. For pipe: 22.5, 45 or 60 degrees. For conduit: 10, 22.5, 30, 45 or 60 degrees. You can also type your own.</li>
       <li>For pipe, pick the pipe type and size to subtract the fitting take-off. The tool then shows the cut length.</li>
       <li>For EMT, switch to conduit mode and pick the bend angle. The tool shows the distance between bends and the shrink.</li>
     </ol>
@@ -27,7 +35,7 @@
     <h2>Which fitting angle should you use?</h2>
     <p>Most plumbers use 45 degree fittings. They are easy to stock, and they keep the offset short. A 22.5 degree fitting makes a long, gentle offset that is good for drain lines. A 60 degree fitting makes a short, steep offset when space is tight, but it slows the flow more. A smaller angle always makes a longer travel for the same offset. Try each angle in the tool and compare the run.</p>
 
-    <h2>The formulas</h2>
+    <h2>Rolling offset formula</h2>
     <p>The math is right-triangle geometry. These are the steps the calculator follows.</p>
     <ul>
       <li>True offset = the square root of (rise squared + roll squared)</li>
@@ -42,7 +50,7 @@
       <li>True offset = the square root of (144 + 81) = 15 inches.</li>
       <li>Travel = 15 / sin 45 = 21.21 inches, or about 21 3/16 inches.</li>
       <li>Run = 15 / tan 45 = 15 inches.</li>
-      <li>The 3/4 inch copper fitting has a take-off of about 3/8 inch. Cut length = 21.21 - 0.75 = 20.46 inches, or about 20 7/16 inches.</li>
+      <li>The 3/4 inch copper 45 degree fitting has a take-off of 11/32 inch (0.344). Cut length = 21.21 - 2 x 0.344 = 20.53 inches, or about 20 1/2 inches.</li>
     </ol>
 
     <h2>Common rise and roll values</h2>
@@ -62,6 +70,22 @@
       </table>
     </div>
 
+    <h2>Fitting take-off chart</h2>
+    <p>Take-off is the distance from the center of the fitting to the bottom of the socket (for butt weld, to the weld end). The calculator subtracts it twice, once for each fitting. These are catalog values for 45 degree fittings, in inches. Other makers differ, so measure the fitting in your hand on jobs where an error costs money.</p>
+    <div class="table-wrap">
+      <table>
+        <caption class="sr-only">Take-off per 45 degree fitting by pipe size, in inches</caption>
+        <thead><tr><th scope="col">Pipe size</th>{TAKEOFF.map((m) => <th scope="col">{m.label}</th>)}</tr></thead>
+        <tbody>
+          {allSizes.map((sz) => <tr><td>{sz.replace('-', ' ')}&quot;</td>{TAKEOFF.map((m) => <td>{cell(m.id, sz)}</td>)}</tr>)}
+        </tbody>
+      </table>
+    </div>
+    <ul>
+      {TAKEOFF.map((m) => <li><strong>{m.label}:</strong> {m.source}.</li>)}
+    </ul>
+    <p>PVC 1-1/4 and 2-1/2 inch are not listed because the printed catalog values did not fit the size pattern. Steel at angles other than 45 degrees is scaled from the 45 degree value, so treat it as approximate. Butt weld cut lengths also lose about 1/8 inch per joint to the root gap.</p>
+
     <h2>Rolling offset in EMT conduit</h2>
     <p>Conduit is bent, not fitted, so the rules change a little. The bender angle sets two numbers. The multiplier is one divided by the sine of the angle. Multiply the true offset by it to get the distance between the two bends. Shrink is the length the conduit loses when you bend it. It equals the true offset times the tangent of half the angle.</p>
     <div class="table-wrap">
@@ -77,7 +101,19 @@
         </tbody>
       </table>
     </div>
-    <p>Example: the true offset is 15 inches and you bend at 30 degrees. The bends go 30 inches apart. The shrink is about 4 inches. The "offset direction" line in the tool tells you how far to rotate the conduit between the two bends, measured from the rise direction.</p>
+    <p>Example: the true offset is 15 inches and you bend at 30 degrees. The bends go 30 inches apart. The shrink is about 4 inches. Many field charts round the 60 degree shrink to 1/2 inch per inch of offset. The tool shows the exact value, 0.577.</p>
+
+    <h2>How to bend a rolling offset in EMT</h2>
+    <p>Both bends of a rolling offset lie in one plane. That plane is tilted from the rise (vertical) direction by an angle that depends on the rise and the roll. The tool shows it as "Bend plane tilt from rise".</p>
+    <ol>
+      <li>Measure the rise and the roll from center line to center line.</li>
+      <li>Switch the tool to EMT conduit and pick the bender angle.</li>
+      <li>Read the distance between bends, the total shrink and the bend plane tilt.</li>
+      <li>Mark the first bend on the conduit. Mark the second bend the distance between bends from the first one.</li>
+      <li>Make bend 1 with the bend plane at the tilt shown.</li>
+      <li>Turn the conduit 180 degrees, so the second bend lies in the same plane, and make bend 2 at the second mark.</li>
+      <li>Add the shrink to your overall length before you cut, then check the shape against the job.</li>
+    </ol>
 
     <h2>Tips for a clean job</h2>
     <ul>
