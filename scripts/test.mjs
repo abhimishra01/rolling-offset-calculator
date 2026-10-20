@@ -105,6 +105,10 @@ test('parse lengths', () => {
   assert.equal(o.parseLength('3/4'), 0.75);
   assert.equal(o.parseLength('12 3/8"'), 12.375);
   assert.equal(o.parseLength('.5'), 0.5);
+  assert.equal(o.parseLength('12,5'), 12.5);
+  assert.equal(o.parseLength('9,25'), 9.25);
+  assert.ok(Number.isNaN(o.parseLength('1,000')));
+  assert.ok(Number.isNaN(o.parseLength('1,2,3')));
   assert.ok(Number.isNaN(o.parseLength('abc')));
   assert.ok(Number.isNaN(o.parseLength('')));
   assert.ok(Number.isNaN(o.parseLength('1/0')));
@@ -145,6 +149,10 @@ test('custom angle parses fractions and rejects junk', () => {
   assert.equal(f.parseAngle('11 1/4'), 11.25);
   assert.equal(f.parseAngle('22,5'), 22.5);
   assert.equal(f.parseAngle('22.5'), 22.5);
+  assert.equal(f.parseAngle('45°'), 45);
+  assert.equal(f.parseAngle('22,5 °'), 22.5);
+  assert.equal(f.parseAngle('30 degrees'), 30);
+  assert.ok(Number.isNaN(f.parseAngle('°')));
   assert.ok(Number.isNaN(f.parseAngle('45abc')));
   assert.ok(Number.isNaN(f.parseAngle('1e1')));
   assert.ok(Number.isNaN(f.parseAngle('')));

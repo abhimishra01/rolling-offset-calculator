@@ -26,7 +26,8 @@ function parseInches(input) {
  */
 export function parseLength(input) {
   if (typeof input === 'number') return input >= 0 && input <= MAX_LENGTH ? input : NaN;
-  const s = String(input ?? '').trim().replace(/[′’‘]/g, "'");
+  // A comma with one or two digits after it is a decimal comma (12,5). Three digits (1,000) stay invalid.
+  const s = String(input ?? '').trim().replace(/[′’‘]/g, "'").replace(/^(\d+),(\d{1,2})(?=\s|$)/, '$1.$2');
   const ft = s.match(/^(\d+(?:\.\d+)?)\s*(?:'|ft\b|feet\b|foot\b)\s*-?\s*(.*)$/i);
   let v;
   if (ft) {

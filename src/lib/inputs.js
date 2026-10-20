@@ -8,7 +8,8 @@ export const DEFAULT_ANGLE = { pipe: 45, emt: 30 };
 
 /** Parse the custom angle field. Accepts 22.5, 22,5, 22 1/2. Returns NaN for empty or junk. */
 export function parseAngle(text) {
-  const t = String(text ?? '').trim();
+  // A degree sign or the word degrees after the number is allowed (45°, 22.5 deg).
+  const t = String(text ?? '').trim().replace(/\s*(°|degrees?|deg)$/i, '').trim();
   if (!t) return NaN;
   return parseLength(/^\d+,\d+$/.test(t) ? t.replace(',', '.') : t);
 }

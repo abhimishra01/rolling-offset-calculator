@@ -13,7 +13,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
 
   <p class="hidden print:block text-sm" id="print-head"><strong>Rolling offset job ticket</strong> <span id="print-url"></span></p>
   <div class="flex flex-wrap items-center gap-3 print:hidden">
-    <div role="group" aria-label="Calculator type" class="seg grid grid-cols-2 gap-1 rounded-xl bg-brand-soft p-1 sm:inline-grid sm:w-80">
+    <div role="group" aria-label="Calculator type" class="seg grid w-full grid-cols-2 gap-1 rounded-xl bg-brand-soft p-1 sm:inline-grid sm:w-80">
       <button type="button" data-mode-btn="pipe" aria-pressed="true">Pipe</button>
       <button type="button" data-mode-btn="emt" aria-pressed="false">EMT conduit</button>
     </div>
@@ -174,7 +174,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
   #tool .fld:focus { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand) 30%, transparent); }
   #tool .fld[aria-invalid="true"] { border-color: var(--err); }
   #tool .fld:disabled { opacity: .55; }
-  #tool .seg button { min-height: 2.75rem; border-radius: .6rem; font-weight: 600; color: var(--muted); }
+  #tool .seg button { min-height: 2.75rem; padding-inline: .75rem; border-radius: .6rem; font-weight: 600; color: var(--muted); }
   #tool .seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .12); outline: 1px solid var(--line); }
   :root[data-theme="dark"] #tool .seg { background: var(--paper); outline: 1px solid var(--line); }
   :root[data-theme="dark"] #tool .seg button[aria-pressed="true"] { background: #26272c; }
