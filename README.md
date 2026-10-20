@@ -1,49 +1,43 @@
-# Microtool site template
+# Rolling Offset Calculator
 
-Astro (static) + Tailwind 4. One config file: `src/site.config.ts`. No backend.
+Free browser tool for plumbers, pipefitters and electricians. Enter the rise and roll, pick the fitting or bend angle, and it gives the true offset, travel, run and cut length (pipe) or the distance between bends, multiplier and shrink (EMT conduit). Live site: https://rollingoffsetcalculator.com (domain not bought yet).
 
-## Make a new tool
+Astro (static) and Tailwind 4. No backend. Everything runs in the browser.
+
+## Where the logic lives
+
+- `src/lib/offset.js`: the math (true offset, travel, run, multiplier, shrink), length parsing (`12 3/8`, `2'-3 1/2"`), 1/16 inch formatting, and the take-off tables. Each table value is read from a maker catalog or a standard, and the source is in the comment above `TAKEOFF`. PVC and copper values apply to 45 degree fittings only.
+- `src/lib/inputs.js`: pure helpers for the form (custom angle parsing, fraction buttons, saved-state checks).
+- `src/components/Tool.astro`: the page (markup, styles, and the script that wires the form, results and diagram).
+- `src/components/Article.astro` and `src/data/faq.ts`: the SEO text and FAQ. The take-off chart in the article is built from `TAKEOFF`.
+- `src/site.config.ts`: name, domain, colors, email, analytics and AdSense IDs.
+
+## Commands
+
+- `npm run dev`: work on the site.
+- `npm test`: run the unit tests (`scripts/test.mjs`). They cover the math, parsing, formatting, take-off tables and form helpers.
+- `npm run build`: build `dist/`.
+- `npm run deploy`: tests, build, then upload to Cloudflare Pages (needs `npx wrangler login` once, done by the owner).
+
+## Changing a take-off value
+
+Do not edit a value without a catalog page or standard to cite. Update `TAKEOFF` in `src/lib/offset.js`, the source comment, and the table test in `scripts/test.mjs`. The article chart and the tool follow automatically.
+
+## GitHub Pages
+
+`.github/workflows/pages.yml` builds on every push to `main` with `PAGES_BASE=/rolling-offset-calculator/` and `PAGES_SITE=https://abhimishra01.github.io`, and publishes to https://abhimishra01.github.io/rolling-offset-calculator/. Canonical tags always point to the real domain. Links use `url()` from `src/lib/url.ts`, so they work at the root and under a base path. To test locally:
 
 ```
-cd ~/Desktop/personal/microtools
-template/scripts/new-tool.sh my-tool mytool.com
-cd sites/my-tool && npm run dev
+PAGES_BASE=/rolling-offset-calculator/ npx astro build --outDir dist-pages
 ```
 
-Then edit, in this order:
-1. `src/site.config.ts`: name, main keyword, supporting keywords, description, email, brand colour.
-2. `src/components/Tool.astro`: the real tool (replace the demo; keep the fixed height so the page does not jump).
-3. `src/components/Article.astro`: about 600 words of plain text. Main keyword in the first paragraph and one heading.
-4. `src/data/faq.ts`: 5 to 8 real questions. They also become FAQ schema.
-5. Optional: `public/og.png` (1200x630) and set `ogImage: '/og.png'`.
-6. Check About, Terms and Privacy text still fit the tool.
+Serve `dist-pages` so it is reachable under `/rolling-offset-calculator/`, then delete `dist-pages`.
 
-Commands: `npm run dev` (work), `npm run build` (make `dist/`), `npm run preview` (check the build), `npm run deploy` (build and upload to Cloudflare Pages).
+## Going live on the domain
 
-## Go live (plain steps)
+1. Buy the domain, set `domain` in `src/site.config.ts`, rebuild.
+2. Add it to Cloudflare, run `npm run deploy`, add the custom domain and the www redirect.
+3. Search Console and Bing Webmaster: submit `https://<domain>/sitemap-index.xml`.
+4. Set `ga4` for Google Analytics. Set `adsense` later, after approval (this also writes `ads.txt`).
 
-1. **Buy the domain** after the tool works. `.com`, 1 year, auto-renew off. Put it in `site.config.ts` as `domain` (no `www`, no `https://`). Rebuild.
-2. **Cloudflare**: add the domain to Cloudflare (free plan) and change the nameservers at the registrar.
-3. **First deploy**: run `npx wrangler login` once (you do this, in your browser). Then `npm run deploy`. The first run asks to create the Pages project; use the same name as `cloudflareProject` in the config.
-4. **Custom domain**: Cloudflare dashboard > Workers & Pages > your project > Custom domains. Add `mytool.com` and `www.mytool.com`. Then add a redirect rule from `www` to the bare domain (or the reverse) so only one version exists.
-5. **No duplicate in Google**: `public/_headers` already sets `X-Robots-Tag: noindex` for the `*.pages.dev` address only. Check it: `curl -sI https://my-tool.pages.dev | grep -i robots` shows noindex; the custom domain does not.
-6. **Google Search Console**: add the domain property, verify with the DNS TXT record in Cloudflare, submit `https://mytool.com/sitemap-index.xml`, request indexing of the home page.
-7. **Bing Webmaster Tools**: sign in, import from Search Console.
-8. **Google Analytics**: create a GA4 property, copy the measurement ID (`G-...`) to `ga4` in the config, rebuild, deploy. Empty means off.
-9. **AdSense (later, about 10 visits a day or more)**: apply with the site. When approved, put the publisher ID (`ca-pub-...`) in `adsense`. The build then adds the script and writes `/ads.txt`. Set up the consent message in AdSense (Privacy & messaging) for EU/UK visitors. Then switch on Auto ads. A first rejection is normal; improve content and apply again.
-10. Share the tool on Reddit, Quora and social. Rankings take 4 to 6 months. Keep the domain at least a year.
-
-## How things work
-
-- **Dark mode**: follows the system, the toggle saves the choice. A tiny inline script sets it before paint, so there is no flash.
-- **SEO**: title, description, canonical (real domain), Open Graph, Twitter, `WebApplication` and `FAQPage` JSON-LD are in `src/layouts/Base.astro` and `src/pages/index.astro`.
-- **Sitemap and robots**: `@astrojs/sitemap` makes `/sitemap-index.xml`; `/robots.txt` points to it. The 404 page is excluded.
-- **ads.txt**: generated from `adsense`. Empty ID gives a comment line only.
-- **Favicon**: `/favicon.svg` is made from the first letter of the name and the brand colour (`src/pages/favicon.svg.ts`). To use your own, put a file at `public/favicon.svg` and delete that `.ts` file. For Apple and old browsers add `public/apple-touch-icon.png` (180x180) and a `<link rel="apple-touch-icon">` line in `Base.astro`.
-- **GA4 and AdSense** load only when their IDs are set (`src/components/Analytics.astro`). These are the only outside requests.
-- **Fonts**: system font stack, no downloads.
-- **Deploy script**: `scripts/deploy.mjs` reads `cloudflareProject` and runs `wrangler pages deploy dist`. It needs Node 22.6 or newer.
-
-## Legal pages
-
-The About, Terms and Privacy pages are good starting text, not legal advice. Read them before you launch and edit what does not match your tool.
+`public/_headers` sets `X-Robots-Tag: noindex` on the `*.pages.dev` address so it does not compete with the real domain.
