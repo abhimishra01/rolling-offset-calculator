@@ -1,6 +1,6 @@
 // ONE config file. Change values here; every page reads from it.
 // Keep this file plain (no type-only syntax): scripts/deploy.mjs imports it directly.
-export default {
+const cfg = {
   name: 'Rolling Offset Calculator',                 // shown in header, title, footer
   domain: 'rollingoffsetcalculator.com',            // no https://, no www. Used for canonical, sitemap, robots
   cloudflareProject: 'rolling-offset-calculator',    // Cloudflare Pages project name (used by npm run deploy)
@@ -20,4 +20,18 @@ export default {
   ogAlt: 'Rolling offset calculator for pipe and EMT conduit',  // alt text for the preview image
   category: 'UtilitiesApplication',   // schema.org applicationCategory
   owner: 'Rolling Offset Calculator',                // name used in legal pages (person or business)
+};
+
+// Bingemind mode (SITE_MODE=bingemind): the tool lives at bingemind.com/rolling-offset-calculator/.
+// Canonical links always name that address. Legal pages name Bingemind as the owner.
+const bingemind = process.env.SITE_MODE === 'bingemind';
+export default {
+  ...cfg,
+  domain: 'bingemind.com/rolling-offset-calculator',
+  origin: 'https://bingemind.com/rolling-offset-calculator',
+  bingemind,
+  owner: bingemind ? 'Bingemind' : cfg.owner,
+  contactWord: bingemind ? 'Contact' : 'Email',
+  contactHref: bingemind ? 'https://bingemind.com/#contact' : `mailto:${cfg.email}`,
+  contactLabel: bingemind ? 'bingemind.com/#contact' : cfg.email,
 };

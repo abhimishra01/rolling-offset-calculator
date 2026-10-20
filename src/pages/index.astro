@@ -8,7 +8,7 @@ import JobLinks from '../components/JobLinks.astro';
 import site from '../site.config.ts';
 import { faq } from '../data/faq.ts';
 
-const base = `https://${site.domain}`;
+const base = site.origin;
 const jsonLd = [
   {
     '@context': 'https://schema.org',

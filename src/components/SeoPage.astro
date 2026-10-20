@@ -9,7 +9,7 @@ import { url } from '../lib/url.ts';
 import type { SeoPage } from '../data/seo-pages.ts';
 interface Props { page: SeoPage; }
 const { page } = Astro.props;
-const base = `https://${site.domain}`;
+const base = site.origin;
 const jsonLd = [
   {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
