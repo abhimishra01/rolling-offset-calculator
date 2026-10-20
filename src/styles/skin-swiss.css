@@ -48,6 +48,7 @@
 :root[data-skin="swiss"][data-theme] #tool .seg { background: transparent; padding: 0; gap: 0; border: 1px solid var(--edge); outline: 0; }
 :root[data-skin="swiss"][data-theme] #tool .seg button { color: var(--ink); }
 :root[data-skin="swiss"][data-theme] #tool .seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); outline: 0; box-shadow: none; }
+:root[data-skin="swiss"][data-theme] #tool .seg button:focus-visible { outline: 3px solid var(--brand-ink); outline-offset: 2px; } /* the pressed rule above removes the outline; bring the focus ring back */
 :root[data-skin="swiss"][data-theme] #tool .fld { border: 0; border-bottom: 2px solid var(--edge); background: var(--fill); }
 :root[data-skin="swiss"][data-theme] #tool .fld:focus { border-bottom-color: var(--brand-ink); box-shadow: none; outline: 3px solid var(--brand-ink); outline-offset: 2px; }
 :root[data-skin="swiss"][data-theme] #tool .chip { border: 1px solid var(--edge); background: transparent; color: var(--ink); }
