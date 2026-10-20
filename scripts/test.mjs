@@ -230,4 +230,20 @@ test('share link round trip', () => {
   const junk = f.sanitizeSaved(f.decodeShare('#m=zzz&a=999&mat=lead&u=km'));
   assert.deepEqual([junk.mode, junk.angle.pipe, junk.material, junk.unit], ['pipe', 45, '', 'in']);
 });
+test('joint gap shortens the cut by two gaps', () => {
+  const a = o.calculate({ rise: 12, roll: 9, angle: 45, takeoff: 1.375 });
+  const b = o.calculate({ rise: 12, roll: 9, angle: 45, takeoff: 1.375, jointGap: 0.125 });
+  near(a.cut - b.cut, 0.25, 1e-9);
+  near(o.calculate({ rise: 12, roll: 9, angle: 45, jointGap: NaN }).cut, 21.2132, 0.0001);
+});
+test('angleProblem explains 90 degrees', () => {
+  assert.match(o.angleProblem(90), /no run/);
+  assert.match(o.angleProblem(120), /no run/);
+  assert.match(o.angleProblem(0), /above 0/);
+  assert.equal(o.angleProblem(45), '');
+});
+test('weld gap round-trips through the share link', () => {
+  const h = f.encodeShare({ mode: 'pipe', rise: '12', roll: '9', material: 'steel', size: '2', jgap: '1/8' });
+  assert.equal(f.sanitizeSaved(f.decodeShare(h)).jgap, '1/8');
+});
 console.log(`\n${n} tests passed`);

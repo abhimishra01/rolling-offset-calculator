@@ -148,24 +148,32 @@ export function isApproximate(material, angle) {
 }
 
 /** Everything the page needs for one calculation. Returns null when there is no usable input. */
-export function calculate({ rise, roll, angle, takeoff = 0, firstMark = NaN }) {
+export function calculate({ rise, roll, angle, takeoff = 0, jointGap = 0, firstMark = NaN }) {
   if (!(rise >= 0) || !(roll >= 0) || !(rise > 0 || roll > 0)) return null;
   if (!(angle > 0 && angle < 90)) return null;
   const t = trueOffset(rise, roll);
   const tr = travel(rise, roll, angle);
   const r = run(rise, roll, angle);
   const k = Number.isFinite(takeoff) && takeoff > 0 ? takeoff : 0;
-  const cut = tr - 2 * k;
+  const g = Number.isFinite(jointGap) && jointGap > 0 ? jointGap : 0; // butt-weld root gap, one per joint, two joints
+  const cut = tr - 2 * k - 2 * g;
   const mult = multiplier(angle);
   const spi = shrinkPerInch(angle);
   const shrink = t * spi;
   const mark1 = Number.isFinite(firstMark) && firstMark >= 0 ? firstMark : NaN;
   return {
-    trueOffset: t, travel: tr, run: r, cut, takeoff: k,
+    trueOffset: t, travel: tr, run: r, cut, takeoff: k, jointGap: g,
     multiplier: mult, shrinkPerInch: spi, shrink,
     offsetAngle: offsetAngle(rise, roll),
     mark1, mark2: Number.isFinite(mark1) ? mark1 + tr : NaN,
   };
+}
+
+/** Message for an angle that cannot be used, or '' when the angle is fine. */
+export function angleProblem(angle) {
+  if (angle >= 90 && Number.isFinite(angle)) return 'Angle: 90° is not allowed. A 90° fitting turns the pipe square, so the offset has no run to calculate. Use a fitting below 90°, such as 45° or 60°.';
+  if (!(angle > 0)) return 'Angle: use a number above 0 and below 90.';
+  return '';
 }
 
 /** Date the formulas and the take-off sources were last checked. Shown on the page. */

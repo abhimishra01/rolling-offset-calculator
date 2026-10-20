@@ -53,7 +53,7 @@ export function sanitizeSaved(raw) {
     mode: MODES.includes(raw.mode) ? raw.mode : 'pipe',
     angle: { ...DEFAULT_ANGLE },
     customText: { pipe: '', emt: '' },
-    rise: clip(raw.rise), roll: clip(raw.roll), takeoff: clip(raw.takeoff), mark1: clip(raw.mark1), fit: clip(raw.fit),
+    rise: clip(raw.rise), roll: clip(raw.roll), takeoff: clip(raw.takeoff), mark1: clip(raw.mark1), fit: clip(raw.fit), jgap: clip(raw.jgap),
     unit: raw.unit === 'mm' ? 'mm' : 'in',
     material: '', size: clip(raw.size),
   };
@@ -69,7 +69,7 @@ export function sanitizeSaved(raw) {
   return out;
 }
 
-const SHARE_KEYS = { m: 'mode', r: 'rise', l: 'roll', t: 'takeoff', k: 'mark1', f: 'fit', u: 'unit', mat: 'material', sz: 'size' };
+const SHARE_KEYS = { m: 'mode', r: 'rise', l: 'roll', t: 'takeoff', k: 'mark1', f: 'fit', g: 'jgap', u: 'unit', mat: 'material', sz: 'size' };
 
 /** Turn the form state into a short query string for the share link. Empty fields are left out. */
 export function encodeShare(s) {
@@ -77,7 +77,7 @@ export function encodeShare(s) {
   const put = (k, v) => { if (v !== undefined && v !== null && String(v).trim() !== '') q.set(k, String(v).trim()); };
   put('m', s.mode); put('r', s.rise); put('l', s.roll); put('a', s.angleText);
   put('u', s.unit === 'mm' ? 'mm' : ''); put('mat', s.material); put('sz', s.material && s.material !== 'custom' ? s.size : '');
-  put('t', s.takeoff); put('k', s.mark1); put('f', s.fit);
+  put('t', s.takeoff); put('k', s.mark1); put('f', s.fit); put('g', s.jgap);
   return q.toString();
 }
 

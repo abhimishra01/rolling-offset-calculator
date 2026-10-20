@@ -79,6 +79,11 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
           <input id="takeoff" type="text" inputmode="decimal" class="fld fld-sm" placeholder="0" spellcheck="false" />
         </div>
         <p id="takeoff-note" class="text-xs text-muted"></p>
+        <div id="jgap-box" hidden>
+          <label for="jgap" class="text-sm text-muted">Weld gap per joint (optional, <span class="unit-name">in</span>)</label>
+          <input id="jgap" type="text" inputmode="decimal" class="fld fld-sm" placeholder="e.g. 1/8" spellcheck="false" />
+          <p class="mt-1 text-xs text-muted">The root gap you leave between the pipe and each fitting. Most welders use about 1/8 in. The cut length drops by this gap at both joints.</p>
+        </div>
         <div>
           <label for="fit" class="text-sm text-muted">Room for the run (optional, <span class="unit-name">in</span>)</label>
           <input id="fit" type="text" inputmode="decimal" class="fld fld-sm" placeholder="e.g. 18" spellcheck="false" />
@@ -228,18 +233,18 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
 </style>
 
 <script>
-  import { parseLength, parseMm, formatInches, formatMm, calculate, takeoffFor, isApproximate, materialById, fittingRoll, alternatives, fitsInRun, INCH_MM } from '../lib/offset.js';
+  import { parseLength, parseMm, formatInches, formatMm, calculate, takeoffFor, isApproximate, angleProblem, materialById, fittingRoll, alternatives, fitsInRun, INCH_MM } from '../lib/offset.js';
   import { PRESETS, DEFAULT_ANGLE, parseAngle, applyFraction, fractionText, sanitizeSaved, encodeShare, decodeShare } from '../lib/inputs.js';
 
   const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
   const root = $('tool');
-  const inputs = { rise: $<HTMLInputElement>('rise'), roll: $<HTMLInputElement>('roll'), takeoff: $<HTMLInputElement>('takeoff'), mark1: $<HTMLInputElement>('mark1'), fit: $<HTMLInputElement>('fit') };
+  const inputs = { rise: $<HTMLInputElement>('rise'), roll: $<HTMLInputElement>('roll'), takeoff: $<HTMLInputElement>('takeoff'), mark1: $<HTMLInputElement>('mark1'), fit: $<HTMLInputElement>('fit'), jgap: $<HTMLInputElement>('jgap') };
   const customAngle = $<HTMLInputElement>('angle-custom');
   const material = $<HTMLSelectElement>('material');
   const size = $<HTMLSelectElement>('size');
   const fracTarget = $('frac-target');
   const fracMsg = $('frac-msg');
-  const NAMES: Record<string, string> = { rise: 'Rise', roll: 'Roll', takeoff: 'Take-off', mark1: 'First mark', fit: 'Room' };
+  const NAMES: Record<string, string> = { rise: 'Rise', roll: 'Roll', takeoff: 'Take-off', mark1: 'First mark', fit: 'Room', jgap: 'Weld gap' };
   const START = { rise: '12', roll: '9' };
 
   // angle[mode] is a number, or NaN while the custom field holds something that is not an angle.
@@ -251,13 +256,13 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
     if (root.dataset.preset) return; // a job page starts fresh each visit and does not touch the saved choices
     try {
       localStorage.setItem(KEY, JSON.stringify({ mode: st.mode, angle: st.angle, customText: st.customText,
-        rise: inputs.rise.value, roll: inputs.roll.value, takeoff: inputs.takeoff.value, mark1: inputs.mark1.value, fit: inputs.fit.value, unit: st.unit, material: material.value, size: size.value }));
+        rise: inputs.rise.value, roll: inputs.roll.value, takeoff: inputs.takeoff.value, mark1: inputs.mark1.value, fit: inputs.fit.value, jgap: inputs.jgap.value, unit: st.unit, material: material.value, size: size.value }));
     } catch {}
   }
   /** Apply a checked state object to the form. */
   function apply(s: NonNullable<ReturnType<typeof sanitizeSaved>>) {
     st.mode = s.mode; st.unit = s.unit; st.angle = s.angle; st.customText = s.customText;
-    for (const k of ['rise', 'roll', 'takeoff', 'mark1', 'fit'] as const) inputs[k].value = s[k];
+    for (const k of ['rise', 'roll', 'takeoff', 'mark1', 'fit', 'jgap'] as const) inputs[k].value = s[k];
     material.value = s.material;
     fillSizes();
     if ([...size.options].some((o) => o.value === s.size)) size.value = s.size;
@@ -342,7 +347,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
     const src = `Source: ${m.source}. Other makers differ, so measure yours when it counts.`;
     if (m.onlyAt45 && a !== 45) return `No catalog value for ${Number.isFinite(a) ? Math.round(a * 100) / 100 + '°' : 'this angle'}: the catalog lists 45° fittings only. Type your own take-off. ${src}`;
     if (isApproximate(m.id, a)) return `Scaled from the 45° value, so approximate. Check your fitting. ${src}`;
-    return m.id === 'steel' ? `${src} The root gap (about 1/8 in per weld) is not included.` : src;
+    return m.id === 'steel' ? `${src} The weld gap is not included unless you enter it below.` : src;
   }
 
   // ---- fraction buttons act on the last field you used
@@ -375,7 +380,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
 
   // ---- reset
   $('reset').addEventListener('click', () => {
-    st.unit = 'in'; inputs.rise.value = START.rise; inputs.roll.value = START.roll; inputs.takeoff.value = ''; inputs.mark1.value = ''; inputs.fit.value = '';
+    st.unit = 'in'; inputs.rise.value = START.rise; inputs.roll.value = START.roll; inputs.takeoff.value = ''; inputs.mark1.value = ''; inputs.fit.value = ''; inputs.jgap.value = '';
     material.value = ''; fillSizes(); applyUnitUi();
     st.angle = { ...DEFAULT_ANGLE }; st.customText = { pipe: '', emt: '' };
     fracMsg.textContent = '';
@@ -406,6 +411,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
     $('frac').hidden = mm();
     inputs.mark1.placeholder = mm() ? 'e.g. 250' : 'e.g. 10';
     inputs.fit.placeholder = mm() ? 'e.g. 450' : 'e.g. 18';
+    inputs.jgap.placeholder = mm() ? 'e.g. 3' : 'e.g. 1/8';
   }
   document.querySelectorAll<HTMLButtonElement>('[data-unit-btn]').forEach((b) => b.addEventListener('click', () => {
     const next = b.dataset.unitBtn!;
@@ -437,6 +443,9 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
     const fitV = emt ? NaN : field(inputs.fit);
     const angle = currentAngle();
     const angleBad = !(angle > 0 && angle < 90);
+    const jgapOn = !emt && material.value === 'steel';
+    $('jgap-box').hidden = !jgapOn;
+    const jgapV = jgapOn ? field(inputs.jgap) : NaN;
     const problems: string[] = [];
     const hint = (a: string, b: string) => (mm() ? `enter a number like ${a}.` : `enter a number like ${b}.`);
     if (bad(inputs.rise)) problems.push('Rise: ' + hint('305 or 305.5', '12, 12.5 or 12 1/2'));
@@ -444,7 +453,8 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
     if (!emt && bad(inputs.takeoff)) problems.push('Take-off: ' + hint('9.5', '3/8 or 0.375'));
     if (!emt && bad(inputs.fit)) problems.push('Room for the run: ' + hint('450', '18 or 18 1/2'));
     if (emt && bad(inputs.mark1)) problems.push('First mark: ' + hint('250', '10 or 10 1/2'));
-    if (angleBad) problems.push('Angle: use a number above 0 and below 90.');
+    if (jgapOn && bad(inputs.jgap)) problems.push('Weld gap: ' + hint('3', '1/8 or 0.125'));
+    if (angleBad) problems.push(angleProblem(angle));
     $('err').textContent = problems.join(' ');
     customAngle.setAttribute('aria-invalid', String(angleBad && customAngle.value.trim() !== ''));
     $('takeoff-note').textContent = takeoffNote();
@@ -452,7 +462,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
     // Any invalid field blanks the results. An empty rise or roll counts as 0.
     const rise = Number.isNaN(riseV) && !bad(inputs.rise) ? 0 : riseV;
     const roll = Number.isNaN(rollV) && !bad(inputs.roll) ? 0 : rollV;
-    const c = problems.length ? null : calculate({ rise, roll, angle, takeoff: Number.isNaN(takeoffV) ? 0 : takeoffV, firstMark: mark1 });
+    const c = problems.length ? null : calculate({ rise, roll, angle, takeoff: Number.isNaN(takeoffV) ? 0 : takeoffV, jointGap: Number.isNaN(jgapV) ? 0 : jgapV, firstMark: mark1 });
 
     $('l-travel').textContent = emt ? 'Distance between bends' : 'Travel';
     $('l-run').textContent = emt ? 'Multiplier' : 'Run';
@@ -483,6 +493,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
         set('run', lens(c.run).text, lens(c.run).sub);
         set('key', lens(c.cut).text, lens(c.cut).sub);
         if (c.takeoff > 0) rows.push(['Take-off per fitting', tk(c.takeoff)]);
+        if (c.jointGap > 0) rows.push(['Weld gap per joint', tk(c.jointGap)]);
         rows.push(['Fitting angle', deg(angle) + '°']);
         const fromLevel = fittingRoll(rise, roll);
         rows.push(['Roll the fittings to', `${fromLevel.toFixed(1)}° from level (${c.offsetAngle.toFixed(1)}° from plumb)`]);
@@ -493,7 +504,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
         }
         const missing = materialById(material.value) && Number.isNaN(takeoffFor(material.value, size.value, angle));
         note = missing ? 'No catalog take-off at this angle, so cut length equals travel until you type your own take-off.'
-          : c.takeoff > 0 ? (c.cut <= 0 ? 'The take-offs are longer than the travel. Check the numbers.' : `Cut length is the travel minus two take-offs of ${tk(c.takeoff)}.`)
+          : c.takeoff > 0 ? (c.cut <= 0 ? 'The take-offs are longer than the travel. Check the numbers.' : `Cut length is the travel minus two take-offs of ${tk(c.takeoff)}${c.jointGap > 0 ? ` and two weld gaps of ${tk(c.jointGap)}` : ''}.`)
           : 'No take-off set, so cut length equals travel (center to center). Pick a pipe and size to subtract the fittings.';
         note += ` Turn each fitting around the pipe so its bend plane tilts ${fromLevel.toFixed(1)}° from level.`;
       }
@@ -502,7 +513,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
         `True offset: ${q(c.trueOffset)}`,
         emt ? `Distance between bends: ${q(c.travel)}` : `Travel: ${q(c.travel)}`,
         emt ? `Multiplier: ${c.multiplier.toFixed(3)}` : `Run: ${q(c.run)}`,
-        emt ? `Total shrink: ${q(c.shrink)}` : `Cut length: ${q(c.cut)}${c.takeoff > 0 ? ` (take-off ${tk(c.takeoff)} per fitting)` : ''}`,
+        emt ? `Total shrink: ${q(c.shrink)}` : `Cut length: ${q(c.cut)}${c.takeoff > 0 ? ` (take-off ${tk(c.takeoff)} per fitting${c.jointGap > 0 ? `, weld gap ${tk(c.jointGap)} per joint` : ''})` : ''}`,
         emt ? '' : `Roll the fittings to ${fittingRoll(rise, roll).toFixed(1)} degrees from level`,
       ].filter(Boolean).join('\n');
       drawDiagram(c, rise, roll, emt);
@@ -530,7 +541,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
   function shareQuery(): string {
     const a = st.angle[st.mode];
     return encodeShare({ mode: st.mode, unit: st.unit, rise: inputs.rise.value, roll: inputs.roll.value, angleText: Number.isFinite(a) ? String(a) : st.customText[st.mode],
-      material: material.value, size: size.value, takeoff: st.mode === 'pipe' ? inputs.takeoff.value : '', mark1: st.mode === 'emt' ? inputs.mark1.value : '', fit: st.mode === 'pipe' ? inputs.fit.value : '' });
+      material: material.value, size: size.value, takeoff: st.mode === 'pipe' ? inputs.takeoff.value : '', mark1: st.mode === 'emt' ? inputs.mark1.value : '', fit: st.mode === 'pipe' ? inputs.fit.value : '', jgap: st.mode === 'pipe' && material.value === 'steel' ? inputs.jgap.value : '' });
   }
   function syncUrl() {
     try { history.replaceState(null, '', location.pathname + location.search + '#' + shareQuery()); } catch {}
@@ -548,7 +559,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
     srTimer = window.setTimeout(() => {
       $('sr-summary').textContent = c ? (emt ? `True offset ${lens(c.trueOffset).text}. Distance between bends ${lens(c.travel).text}. Total shrink ${lens(c.shrink).text}.`
         : `True offset ${lens(c.trueOffset).text}. Travel ${lens(c.travel).text}. Cut length ${lens(c.cut).text}.`) : '';
-    }, 500);
+    }, 150);
   }
   // Show the phone bar only while the calculator is on screen and its own results are not.
   {
