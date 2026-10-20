@@ -1,0 +1,35 @@
+- generic [active] [ref=f9e1]:
+  - link "Skip to content" [ref=f9e2] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=f9e3]:
+    - generic [ref=f9e4]:
+      - link "Demo Ruler" [ref=f9e5] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f9e7]:
+        - navigation "Main" [ref=f9e8]:
+          - link "Tool" [ref=f9e9] [cursor=pointer]:
+            - /url: /
+          - link "About" [ref=f9e10] [cursor=pointer]:
+            - /url: /about/
+          - link "Contact" [ref=f9e11] [cursor=pointer]:
+            - /url: /contact/
+        - button "Switch colour theme" [ref=f9e12]
+  - main [ref=f9e16]:
+    - generic [ref=f9e17]:
+      - paragraph [ref=f9e18]: "404"
+      - heading "This page does not exist." [level=1] [ref=f9e19]
+      - paragraph [ref=f9e20]: The link may be old or mistyped. The tool is on the home page.
+      - link "Go to the tool" [ref=f9e21] [cursor=pointer]:
+        - /url: /
+  - contentinfo [ref=f9e22]:
+    - generic [ref=f9e23]:
+      - paragraph [ref=f9e24]: © 2026 Demo Ruler. Free to use.
+      - navigation "Footer" [ref=f9e25]:
+        - link "About" [ref=f9e26] [cursor=pointer]:
+          - /url: /about/
+        - link "Contact" [ref=f9e27] [cursor=pointer]:
+          - /url: /contact/
+        - link "Privacy Policy" [ref=f9e28] [cursor=pointer]:
+          - /url: /privacy/
+        - link "Terms" [ref=f9e29] [cursor=pointer]:
+          - /url: /terms/

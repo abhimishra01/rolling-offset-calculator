@@ -1,0 +1,284 @@
+- generic [active] [ref=f6e1]:
+  - link "Skip to content" [ref=f6e2] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=f6e3]:
+    - generic [ref=f6e4]:
+      - link "Rolling Offset Calculator" [ref=f6e5] [cursor=pointer]:
+        - /url: /
+        - generic [ref=f6e6]:
+          - generic [ref=f6e7]: Rolling Offset
+          - generic [ref=f6e8]: Calculator
+      - generic [ref=f6e9]:
+        - navigation "Main" [ref=f6e10]:
+          - link "About" [ref=f6e11] [cursor=pointer]:
+            - /url: /about/
+          - link "Contact" [ref=f6e12] [cursor=pointer]:
+            - /url: /contact/
+        - button "Switch colour theme" [ref=f6e13]
+  - main [ref=f6e16]:
+    - generic [ref=f6e17]:
+      - paragraph [ref=f6e18]: Free. Works on your phone.
+      - heading "Rolling Offset Calculator" [level=1] [ref=f6e19]
+      - paragraph [ref=f6e20]: Free rolling offset calculator for pipe and EMT conduit. Get true offset, travel, run, shrink and cut length to 1/16 inch. No sign-up.
+      - region "Rolling offset calculator" [ref=f6e22]:
+        - group "Calculator type" [ref=f6e23]:
+          - button "Pipe" [ref=f6e24]
+          - button "EMT conduit" [pressed] [ref=f6e25]
+        - generic [ref=f6e26]:
+          - generic [ref=f6e27]:
+            - generic [ref=f6e28]:
+              - generic [ref=f6e29]:
+                - generic [ref=f6e30]: Rise
+                - textbox "Rise" [ref=f6e32]: "12"
+              - generic [ref=f6e33]:
+                - generic [ref=f6e34]: Roll
+                - textbox "Roll" [ref=f6e36]: "9"
+            - paragraph [ref=f6e37]: Inches, center to center. Type 12.5 or 12 1/2.
+            - generic [ref=f6e38]:
+              - paragraph [ref=f6e39]: Add a fraction to Rise
+              - group "Fraction buttons" [ref=f6e40]:
+                - button "Add 1/8 inch" [ref=f6e41] [cursor=pointer]: 1/8
+                - button "Add 1/4 inch" [ref=f6e42] [cursor=pointer]: 1/4
+                - button "Add 3/8 inch" [ref=f6e43] [cursor=pointer]: 3/8
+                - button "Add 1/2 inch" [ref=f6e44] [cursor=pointer]: 1/2
+                - button "Add 5/8 inch" [ref=f6e45] [cursor=pointer]: 5/8
+                - button "Add 3/4 inch" [ref=f6e46] [cursor=pointer]: 3/4
+                - button "Add 7/8 inch" [ref=f6e47] [cursor=pointer]: 7/8
+            - group "Bend angle" [ref=f6e48]:
+              - radiogroup "Bend angle" [ref=f6e51]:
+                - radio "10°" [ref=f6e52] [cursor=pointer]
+                - radio "22.5°" [ref=f6e53] [cursor=pointer]
+                - radio "30°" [checked] [ref=f6e54] [cursor=pointer]
+                - radio "45°" [ref=f6e55] [cursor=pointer]
+                - radio "60°" [ref=f6e56] [cursor=pointer]
+              - generic [ref=f6e57]:
+                - generic [ref=f6e58]: Other angle
+                - textbox "Other angle" [ref=f6e59]:
+                  - /placeholder: e.g. 11.25
+                - generic [ref=f6e60]: degrees
+            - generic [ref=f6e61]:
+              - generic [ref=f6e62]: First mark from the conduit end (optional, in)
+              - textbox "First mark from the conduit end (optional, in)" [ref=f6e63]:
+                - /placeholder: e.g. 10
+                - text: "10"
+            - alert [ref=f6e64]
+          - generic [ref=f6e65]:
+            - generic [ref=f6e66]:
+              - generic [ref=f6e67]:
+                - generic [ref=f6e68]:
+                  - term [ref=f6e69]:
+                    - generic [ref=f6e71]: True offset (set)
+                  - definition [ref=f6e72]:
+                    - generic [ref=f6e73]: 15"
+                    - generic [ref=f6e74]: 15.00 in
+                - generic [ref=f6e75]:
+                  - term [ref=f6e76]:
+                    - generic [ref=f6e78]: Distance between bends
+                  - definition [ref=f6e79]:
+                    - generic [ref=f6e80]: 30"
+                    - generic [ref=f6e81]: 30.00 in
+                - generic [ref=f6e82]:
+                  - term [ref=f6e83]: Run
+                  - definition [ref=f6e85]:
+                    - generic [ref=f6e86]: 26"
+                    - generic [ref=f6e87]: 25.98 in
+                - generic [ref=f6e88]:
+                  - term [ref=f6e89]:
+                    - generic [ref=f6e90]: Total shrink
+                  - definition [ref=f6e91]:
+                    - generic [ref=f6e92]: 4"
+                    - generic [ref=f6e93]: 4.02 in
+              - paragraph [ref=f6e94]: Space the two bends 30" apart. Add 4" of shrink to your overall length.
+              - generic [ref=f6e95]:
+                - generic [ref=f6e96]:
+                  - term [ref=f6e97]: Multiplier
+                  - definition [ref=f6e98]: "2.000"
+                - generic [ref=f6e99]:
+                  - term [ref=f6e100]: Shrink per inch of offset
+                  - definition [ref=f6e101]: 1/4" (0.268)
+                - generic [ref=f6e102]:
+                  - term [ref=f6e103]: Mark 1
+                  - definition [ref=f6e104]: 10" (10.00")
+                - generic [ref=f6e105]:
+                  - term [ref=f6e106]: Mark 2 (mark 1 + distance)
+                  - definition [ref=f6e107]: 40" (40.00")
+                - generic [ref=f6e108]:
+                  - term [ref=f6e109]: Offset direction from rise
+                  - definition [ref=f6e110]: 36.9°
+            - generic [ref=f6e111]:
+              - button "Copy results" [ref=f6e112] [cursor=pointer]
+              - status
+            - figure "Not to scale. Dots are the pipe center lines at each fitting. Travel is the long diagonal through the box." [ref=f6e113]:
+              - img "Rolling offset diagram A box with rise, roll and run as its edges. The true offset crosses the rise and roll face. The travel crosses the whole box." [ref=f6e114]:
+                - generic [ref=f6e126]:
+                  - generic [ref=f6e127]: Roll 9"
+                  - generic [ref=f6e128]: Rise 12"
+                  - generic [ref=f6e129]: Run 26"
+                  - generic [ref=f6e130]: True offset 15"
+                  - generic [ref=f6e131]: Travel 30"
+      - paragraph [ref=f6e133]:
+        - link "About" [ref=f6e134] [cursor=pointer]:
+          - /url: /about/
+        - text: ·
+        - link "Privacy Policy" [ref=f6e135] [cursor=pointer]:
+          - /url: /privacy/
+        - text: ·
+        - link "Terms" [ref=f6e136] [cursor=pointer]:
+          - /url: /terms/
+        - text: ·
+        - link "Contact" [ref=f6e137] [cursor=pointer]:
+          - /url: /contact/
+    - region [ref=f6e138]:
+      - article [ref=f6e139]:
+        - heading "What is a rolling offset?" [level=2] [ref=f6e140]
+        - paragraph [ref=f6e141]: "A rolling offset moves a run of pipe or conduit up and sideways at the same time. The run ends on a new line that is parallel to the old one. You need it when a beam, a duct, a wall or another pipe is in the way and the path is not flat or square. This rolling offset calculator gives you every number you need to lay it out: the true offset, the travel, the run and the cut length."
+        - heading "What each number means" [level=2] [ref=f6e142]
+        - list [ref=f6e143]:
+          - listitem [ref=f6e144]:
+            - strong [ref=f6e145]: Rise
+            - text: is the vertical distance between the two center lines.
+          - listitem [ref=f6e146]:
+            - strong [ref=f6e147]: Roll
+            - text: is the sideways distance between the two center lines.
+          - listitem [ref=f6e148]:
+            - strong [ref=f6e149]: True offset
+            - text: (the set) is the straight distance between the center lines. It is the diagonal across the rise and the roll.
+          - listitem [ref=f6e150]:
+            - strong [ref=f6e151]: Travel
+            - text: is the center to center length of the angled piece between the two fittings.
+          - listitem [ref=f6e152]:
+            - strong [ref=f6e153]: Run
+            - text: is how far the offset moves along the pipe. It is the length the offset uses up on the straight line.
+        - heading "How to use the calculator" [level=2] [ref=f6e154]
+        - list [ref=f6e155]:
+          - listitem [ref=f6e156]: Measure the rise and the roll from center line to center line, in inches.
+          - listitem [ref=f6e157]: Type them in. Use decimals such as 12.5, or fractions such as 12 1/2. The fraction buttons add 1/8 inch steps on a phone.
+          - listitem [ref=f6e158]: "Pick the fitting angle: 22.5, 45 or 60 degrees, or type your own."
+          - listitem [ref=f6e159]: For pipe, pick the pipe type and size to subtract the fitting take-off. The tool then shows the cut length.
+          - listitem [ref=f6e160]: For EMT, switch to conduit mode and pick the bend angle. The tool shows the distance between bends and the shrink.
+        - heading "Which fitting angle should you use?" [level=2] [ref=f6e161]
+        - paragraph [ref=f6e162]: Most plumbers use 45 degree fittings. They are easy to stock, and they keep the offset short. A 22.5 degree fitting makes a long, gentle offset that is good for drain lines. A 60 degree fitting makes a short, steep offset when space is tight, but it slows the flow more. A smaller angle always makes a longer travel for the same offset. Try each angle in the tool and compare the run.
+        - heading "The formulas" [level=2] [ref=f6e163]
+        - paragraph [ref=f6e164]: The math is right-triangle geometry. These are the steps the calculator follows.
+        - list [ref=f6e165]:
+          - listitem [ref=f6e166]: True offset = the square root of (rise squared + roll squared)
+          - listitem [ref=f6e167]: Travel = true offset / sin(angle)
+          - listitem [ref=f6e168]: Run = true offset / tan(angle)
+          - listitem [ref=f6e169]: Cut length = travel - 2 x take-off
+        - heading "Worked example" [level=2] [ref=f6e170]
+        - paragraph [ref=f6e171]: A copper line must clear a duct. The rise is 12 inches and the roll is 9 inches. You use 45 degree fittings.
+        - list [ref=f6e172]:
+          - listitem [ref=f6e173]: True offset = the square root of (144 + 81) = 15 inches.
+          - listitem [ref=f6e174]: Travel = 15 / sin 45 = 21.21 inches, or about 21 3/16 inches.
+          - listitem [ref=f6e175]: Run = 15 / tan 45 = 15 inches.
+          - listitem [ref=f6e176]: The 3/4 inch copper fitting has a take-off of about 3/8 inch. Cut length = 21.21 - 0.75 = 20.46 inches, or about 20 7/16 inches.
+        - heading "Common rise and roll values" [level=2] [ref=f6e177]
+        - paragraph [ref=f6e178]: These pairs give a whole number for the true offset. The travel is for 45 degree fittings.
+        - table [ref=f6e180]:
+          - caption [ref=f6e181]: True offset and travel for common rise and roll pairs at 45 degrees
+          - rowgroup [ref=f6e182]:
+            - row [ref=f6e183]:
+              - columnheader "Rise" [ref=f6e184]
+              - columnheader "Roll" [ref=f6e185]
+              - columnheader "True offset" [ref=f6e186]
+              - columnheader "Travel at 45°" [ref=f6e187]
+          - rowgroup [ref=f6e188]:
+            - row [ref=f6e189]:
+              - cell "3" [ref=f6e190]
+              - cell "4" [ref=f6e191]
+              - cell "5" [ref=f6e192]
+              - cell "7.07" [ref=f6e193]
+            - row [ref=f6e194]:
+              - cell "6" [ref=f6e195]
+              - cell "8" [ref=f6e196]
+              - cell "10" [ref=f6e197]
+              - cell "14.14" [ref=f6e198]
+            - row [ref=f6e199]:
+              - cell "5" [ref=f6e200]
+              - cell "12" [ref=f6e201]
+              - cell "13" [ref=f6e202]
+              - cell "18.38" [ref=f6e203]
+            - row [ref=f6e204]:
+              - cell "12" [ref=f6e205]
+              - cell "9" [ref=f6e206]
+              - cell "15" [ref=f6e207]
+              - cell "21.21" [ref=f6e208]
+            - row [ref=f6e209]:
+              - cell "8" [ref=f6e210]
+              - cell "15" [ref=f6e211]
+              - cell "17" [ref=f6e212]
+              - cell "24.04" [ref=f6e213]
+            - row [ref=f6e214]:
+              - cell "24" [ref=f6e215]
+              - cell "7" [ref=f6e216]
+              - cell "25" [ref=f6e217]
+              - cell "35.36" [ref=f6e218]
+        - heading "Rolling offset in EMT conduit" [level=2] [ref=f6e219]
+        - paragraph [ref=f6e220]: Conduit is bent, not fitted, so the rules change a little. The bender angle sets two numbers. The multiplier is one divided by the sine of the angle. Multiply the true offset by it to get the distance between the two bends. Shrink is the length the conduit loses when you bend it. It equals the true offset times the tangent of half the angle.
+        - table [ref=f6e222]:
+          - caption [ref=f6e223]: Multiplier and shrink per inch of offset by bend angle
+          - rowgroup [ref=f6e224]:
+            - row [ref=f6e225]:
+              - columnheader "Bend angle" [ref=f6e226]
+              - columnheader "Multiplier" [ref=f6e227]
+              - columnheader "Shrink per inch of offset" [ref=f6e228]
+          - rowgroup [ref=f6e229]:
+            - row [ref=f6e230]:
+              - cell "10°" [ref=f6e231]
+              - cell "5.76" [ref=f6e232]
+              - cell "0.087 in" [ref=f6e233]
+            - row [ref=f6e234]:
+              - cell "22.5°" [ref=f6e235]
+              - cell "2.61" [ref=f6e236]
+              - cell "0.199 in (about 3/16)" [ref=f6e237]
+            - row [ref=f6e238]:
+              - cell "30°" [ref=f6e239]
+              - cell "2.00" [ref=f6e240]
+              - cell "0.268 in (about 1/4)" [ref=f6e241]
+            - row [ref=f6e242]:
+              - cell "45°" [ref=f6e243]
+              - cell "1.41" [ref=f6e244]
+              - cell "0.414 in (about 3/8)" [ref=f6e245]
+            - row [ref=f6e246]:
+              - cell "60°" [ref=f6e247]
+              - cell "1.15" [ref=f6e248]
+              - cell "0.577 in" [ref=f6e249]
+        - paragraph [ref=f6e250]: "Example: the true offset is 15 inches and you bend at 30 degrees. The bends go 30 inches apart. The shrink is about 4 inches. The \"offset direction\" line in the tool tells you how far to rotate the conduit between the two bends, measured from the rise direction."
+        - heading "Tips for a clean job" [level=2] [ref=f6e251]
+        - list [ref=f6e252]:
+          - listitem [ref=f6e253]: Measure to the center of the pipe, not to the edge. For conduit, measure to the center of the tube.
+          - listitem [ref=f6e254]: Use the same fitting angle on both ends of the offset.
+          - listitem [ref=f6e255]: Check the take-off against the fittings in your hand. Sizes differ between makers.
+          - listitem [ref=f6e256]: Dry fit the piece before you glue, solder or weld.
+          - listitem [ref=f6e257]: If the cut length comes out zero or negative, the fittings are too large for that offset. Use a smaller angle or a longer rise and roll.
+    - region [ref=f6e258]:
+      - heading "Frequently asked questions" [level=2] [ref=f6e259]
+      - generic [ref=f6e260]:
+        - group [ref=f6e261]:
+          - generic "What is a rolling offset?" [ref=f6e262] [cursor=pointer]
+        - group [ref=f6e265]:
+          - generic "How do you calculate a rolling offset?" [ref=f6e266] [cursor=pointer]
+        - group [ref=f6e269]:
+          - generic "What is the difference between travel and run?" [ref=f6e270] [cursor=pointer]
+        - group [ref=f6e273]:
+          - generic "How do I find the cut length of the pipe?" [ref=f6e274] [cursor=pointer]
+        - group [ref=f6e277]:
+          - generic "How do I use this for EMT conduit?" [ref=f6e278] [cursor=pointer]
+        - group [ref=f6e281]:
+          - generic "What is shrink and why does it matter?" [ref=f6e282] [cursor=pointer]
+        - group [ref=f6e285]:
+          - generic "Which fitting angle should I use?" [ref=f6e286] [cursor=pointer]
+        - group [ref=f6e289]:
+          - generic "Does this work on my phone?" [ref=f6e290] [cursor=pointer]
+  - contentinfo [ref=f6e293]:
+    - generic [ref=f6e294]:
+      - paragraph [ref=f6e295]: © 2026 Rolling Offset Calculator. Free to use.
+      - navigation "Footer" [ref=f6e296]:
+        - link "About" [ref=f6e297] [cursor=pointer]:
+          - /url: /about/
+        - link "Contact" [ref=f6e298] [cursor=pointer]:
+          - /url: /contact/
+        - link "Privacy Policy" [ref=f6e299] [cursor=pointer]:
+          - /url: /privacy/
+        - link "Terms" [ref=f6e300] [cursor=pointer]:
+          - /url: /terms/

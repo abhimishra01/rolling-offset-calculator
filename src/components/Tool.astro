@@ -1,0 +1,412 @@
+---
+// The calculator. Inputs on the left, results and the diagram on the right.
+// Result slots are always in the DOM, so the page never jumps while you type.
+import { TAKEOFF_45 } from '../lib/offset.js';
+const materials = Object.entries(TAKEOFF_45).map(([id, m]) => ({ id, label: m.label }));
+const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
+---
+<section id="tool" aria-label="Rolling offset calculator" data-mode="pipe"
+  class="rounded-2xl border border-line bg-card p-4 sm:p-6 sm:shadow-[6px_6px_0_0_var(--line)]">
+
+  <div role="group" aria-label="Calculator type" class="seg grid grid-cols-2 gap-1 rounded-xl bg-brand-soft p-1 sm:inline-grid sm:w-80">
+    <button type="button" data-mode-btn="pipe" aria-pressed="true">Pipe</button>
+    <button type="button" data-mode-btn="emt" aria-pressed="false">EMT conduit</button>
+  </div>
+
+  <div class="mt-5 grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:gap-8">
+    <!-- Inputs -->
+    <form id="inputs" class="space-y-5" onsubmit="return false" autocomplete="off">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label for="rise" class="lbl"><i class="sw sw-rise"></i>Rise</label>
+          <input id="rise" name="rise" type="text" inputmode="decimal" enterkeyhint="next" class="fld" value="12" aria-describedby="dim-hint" spellcheck="false" />
+        </div>
+        <div>
+          <label for="roll" class="lbl"><i class="sw sw-roll"></i>Roll</label>
+          <input id="roll" name="roll" type="text" inputmode="decimal" enterkeyhint="done" class="fld" value="9" aria-describedby="dim-hint" spellcheck="false" />
+        </div>
+      </div>
+      <p id="dim-hint" class="-mt-3 text-sm text-muted">Inches, center to center. Type 12.5 or 12 1/2.</p>
+
+      <div id="frac" class="-mt-2">
+        <p class="text-sm font-medium">Add a fraction to <span id="frac-target" class="text-brand-ink">Rise</span></p>
+        <div class="mt-1.5 grid grid-cols-7 gap-1.5" role="group" aria-label="Fraction buttons">
+          {fracs.map((f) => <button type="button" class="chip frac-btn" data-frac={f} aria-label={`Add ${f} inch`}>{f}</button>)}
+        </div>
+      </div>
+
+      <fieldset>
+        <legend class="lbl"><span id="angle-label">Fitting angle</span></legend>
+        <div id="angle-chips" class="mt-1.5 flex flex-wrap gap-1.5" role="radiogroup" aria-labelledby="angle-label"></div>
+        <div class="mt-2 flex items-center gap-2">
+          <label for="angle-custom" class="text-sm text-muted">Other angle</label>
+          <input id="angle-custom" type="text" inputmode="decimal" class="fld fld-sm w-24" placeholder="e.g. 11.25" spellcheck="false" />
+          <span class="text-sm text-muted">degrees</span>
+        </div>
+      </fieldset>
+
+      <div data-only="pipe" class="space-y-3 rounded-xl border border-line p-3">
+        <p class="text-sm font-semibold">Fitting take-off <span class="font-normal text-muted">(optional)</span></p>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="material" class="text-sm text-muted">Pipe</label>
+            <select id="material" class="fld fld-sm">
+              <option value="">Not set</option>
+              {materials.map((m) => <option value={m.id}>{m.label}</option>)}
+              <option value="custom">My own number</option>
+            </select>
+          </div>
+          <div>
+            <label for="size" class="text-sm text-muted">Size (in)</label>
+            <select id="size" class="fld fld-sm" disabled></select>
+          </div>
+        </div>
+        <div>
+          <label for="takeoff" class="text-sm text-muted">Take-off per fitting (in)</label>
+          <input id="takeoff" type="text" inputmode="decimal" class="fld fld-sm" placeholder="0" spellcheck="false" />
+        </div>
+        <p class="text-xs text-muted">Typical sizes only. Fittings differ by maker, so measure yours when it counts.</p>
+      </div>
+
+      <div data-only="emt" class="space-y-2 rounded-xl border border-line p-3">
+        <label for="mark1" class="text-sm font-semibold">First mark from the conduit end <span class="font-normal text-muted">(optional, in)</span></label>
+        <input id="mark1" type="text" inputmode="decimal" class="fld fld-sm" placeholder="e.g. 10" spellcheck="false" />
+      </div>
+
+      <p id="err" class="min-h-[1.25rem] text-sm font-medium text-[var(--err)]" role="alert"></p>
+    </form>
+
+    <!-- Results -->
+    <div class="min-w-0">
+      <div id="results" aria-live="polite" aria-atomic="true">
+        <dl class="grid grid-cols-2 gap-3">
+          <div class="res res-main"><dt><i class="sw sw-offset"></i><span id="l-offset">True offset (set)</span></dt><dd><b id="v-offset">&ndash;</b><small id="d-offset">&nbsp;</small></dd></div>
+          <div class="res res-main"><dt><i class="sw sw-travel"></i><span id="l-travel">Travel</span></dt><dd><b id="v-travel">&ndash;</b><small id="d-travel">&nbsp;</small></dd></div>
+          <div class="res"><dt><i class="sw sw-run"></i>Run</dt><dd><b id="v-run">&ndash;</b><small id="d-run">&nbsp;</small></dd></div>
+          <div class="res res-key"><dt><span id="l-key">Cut length</span></dt><dd><b id="v-key">&ndash;</b><small id="d-key">&nbsp;</small></dd></div>
+        </dl>
+        <p id="note" class="mt-2 min-h-[2.5rem] text-sm text-muted"></p>
+        <dl id="extra" class="mt-1 divide-y divide-line border-y border-line text-sm"></dl>
+      </div>
+
+      <div class="mt-4 flex items-center gap-3">
+        <button type="button" id="copy" class="btn">Copy results</button>
+        <span id="copied" class="text-sm text-muted" role="status"></span>
+      </div>
+
+      <figure class="blueprint mt-4 rounded-xl border border-line p-2">
+        <svg id="diagram" viewBox="0 0 400 250" role="img" aria-labelledby="dg-t dg-d" class="block h-auto w-full">
+          <title id="dg-t">Rolling offset diagram</title>
+          <desc id="dg-d">A box with rise, roll and run as its edges. The true offset crosses the rise and roll face. The travel crosses the whole box.</desc>
+          <g id="dg-box" fill="none" stroke-width="1" stroke-dasharray="3 4" class="dg-ghost"></g>
+          <g id="dg-lines" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <line id="dg-roll" class="dg-roll" stroke-width="3" />
+            <line id="dg-rise" class="dg-rise" stroke-width="3" />
+            <line id="dg-run" class="dg-run" stroke-width="3" />
+            <line id="dg-offset" class="dg-offset" stroke-width="3.5" />
+            <line id="dg-travel" class="dg-travel" stroke-width="4.5" />
+          </g>
+          <circle id="dg-s" r="6.5" class="dg-end" /><circle id="dg-e" r="6.5" class="dg-end" />
+          <g id="dg-labels" font-size="12.5"></g>
+        </svg>
+        <figcaption class="px-1 pt-1 text-xs text-muted">Not to scale. Dots are the pipe center lines at each fitting. Travel is the long diagonal through the box.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<style is:global>
+  #tool {
+    --c-rise: #1f7a4d; --c-roll: #2b6cb0; --c-run: #7c5cbf; --c-offset: #b4540a; --c-travel: var(--ink); --err: #b42318;
+  }
+  :root[data-theme="dark"] #tool {
+    --c-rise: #4cc38a; --c-roll: #6aa9ee; --c-run: #b49cf2; --c-offset: #f08a3c; --err: #ff8a80;
+  }
+  #tool .lbl { display: flex; align-items: center; gap: .4rem; font-size: .875rem; font-weight: 600; }
+  #tool .sw { display: inline-block; width: .7rem; height: .7rem; border-radius: 3px; flex: none; }
+  #tool .sw-rise { background: var(--c-rise); } .sw-roll { background: var(--c-roll); } .sw-run { background: var(--c-run); }
+  #tool .sw-offset { background: var(--c-offset); } .sw-travel { background: var(--c-travel); }
+  #tool .fld { display: block; width: 100%; min-height: 3rem; margin-top: .3rem; padding: .5rem .75rem; border: 1px solid var(--line);
+    border-radius: .75rem; background: var(--paper); color: var(--ink); font-size: 1.25rem; font-variant-numeric: tabular-nums; outline: none; }
+  #tool .fld-sm { min-height: 2.75rem; font-size: 1rem; }
+  #tool select.fld { appearance: auto; }
+  #tool .fld:focus { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand) 30%, transparent); }
+  #tool .fld[aria-invalid="true"] { border-color: var(--err); }
+  #tool .fld:disabled { opacity: .55; }
+  #tool .seg button { min-height: 2.75rem; border-radius: .6rem; font-weight: 600; color: var(--muted); }
+  #tool .seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
+  #tool .chip { min-height: 2.75rem; min-width: 2.75rem; padding: 0 .75rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--paper);
+    color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; }
+  #tool .chip:hover { border-color: var(--brand); }
+  #tool .chip[aria-checked="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
+  #tool .frac-btn { padding: 0; font-size: .9rem; }
+  #tool .res { border: 1px solid var(--line); border-radius: .85rem; padding: .7rem .8rem; background: var(--paper); min-width: 0; }
+  #tool .res dt { display: flex; align-items: center; gap: .4rem; font-size: .8rem; font-weight: 600; color: var(--muted); }
+  #tool .res dd { margin: .15rem 0 0; display: flex; flex-direction: column; }
+  #tool .res b { font-size: 1.5rem; line-height: 1.2; font-weight: 750; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  #tool .res small { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 1.1rem; }
+  #tool .res-main { background: var(--brand-soft); border-color: transparent; }
+  #tool .res-key { background: var(--brand); border-color: var(--brand); }
+  #tool .res-key dt, #tool .res-key small { color: rgb(255 255 255 / .92); }
+  #tool .res-key b { color: #fff; }
+  #extra > div { display: flex; justify-content: space-between; gap: 1rem; padding: .5rem 0; }
+  #extra dt { color: var(--muted); } #extra dd { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+  #tool .btn { min-height: 2.75rem; padding: 0 1.1rem; border: 1px solid var(--line); border-radius: 999px; background: var(--card); font-weight: 600; cursor: pointer; }
+  #tool .btn:hover { border-color: var(--brand); }
+  #tool .blueprint { background-color: var(--paper);
+    background-image: radial-gradient(color-mix(in oklab, var(--ink) 14%, transparent) 1px, transparent 1.2px); background-size: 16px 16px; }
+  #tool[data-mode="pipe"] [data-only="emt"], #tool[data-mode="emt"] [data-only="pipe"] { display: none; }
+  #tool .dg-ghost { stroke: var(--muted); opacity: .55; }
+  #tool .dg-roll { stroke: var(--c-roll); } .dg-rise { stroke: var(--c-rise); } .dg-run { stroke: var(--c-run); }
+  #tool .dg-offset { stroke: var(--c-offset); } .dg-travel { stroke: var(--c-travel); stroke-dasharray: 1 0; }
+  #tool .dg-end { fill: var(--card); stroke: var(--c-travel); stroke-width: 3; }
+  #dg-labels text { fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; font-variant-numeric: tabular-nums; }
+  @media (max-width: 640px) { #dg-labels { font-size: 16px; } }
+  #dg-labels .k { font-weight: 500; }
+  #dg-labels .v { font-weight: 750; }
+</style>
+
+<script>
+  import { parseLength, formatInches, calculate, takeoffFor, TAKEOFF_45 } from '../lib/offset.js';
+
+  const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
+  const root = $('tool');
+  const PRESETS: Record<string, number[]> = { pipe: [22.5, 45, 60], emt: [10, 22.5, 30, 45, 60] };
+  const inputs = { rise: $<HTMLInputElement>('rise'), roll: $<HTMLInputElement>('roll'), takeoff: $<HTMLInputElement>('takeoff'), mark1: $<HTMLInputElement>('mark1') };
+  const customAngle = $<HTMLInputElement>('angle-custom');
+  const material = $<HTMLSelectElement>('material');
+  const size = $<HTMLSelectElement>('size');
+  const fracTarget = $('frac-target');
+  const NAMES: Record<string, string> = { rise: 'Rise', roll: 'Roll', takeoff: 'Take-off', mark1: 'First mark' };
+
+  const st = { mode: 'pipe', angle: { pipe: 45, emt: 30 } as Record<string, number | null>, customText: { pipe: '', emt: '' } as Record<string, string>, focus: 'rise' as keyof typeof inputs };
+
+  // ---- saved choices (a convenience only; the page works without it)
+  const KEY = 'roc-v1';
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify({ mode: st.mode, angle: st.angle, customText: st.customText,
+        rise: inputs.rise.value, roll: inputs.roll.value, takeoff: inputs.takeoff.value, mark1: inputs.mark1.value, material: material.value, size: size.value }));
+    } catch {}
+  }
+  function load() {
+    try {
+      const s = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (!s) return;
+      if (s.mode === 'pipe' || s.mode === 'emt') st.mode = s.mode;
+      if (s.angle) st.angle = { pipe: s.angle.pipe ?? 45, emt: s.angle.emt ?? 30 };
+      if (s.customText) st.customText = { pipe: s.customText.pipe || '', emt: s.customText.emt || '' };
+      for (const k of ['rise', 'roll', 'takeoff', 'mark1'] as const) if (typeof s[k] === 'string') inputs[k].value = s[k];
+      if (typeof s.material === 'string') material.value = s.material;
+      fillSizes(); if (typeof s.size === 'string' && [...size.options].some((o) => o.value === s.size)) size.value = s.size;
+    } catch {}
+  }
+
+  // ---- angle chips
+  function renderAngles() {
+    const box = $('angle-chips');
+    const cur = st.angle[st.mode];
+    box.innerHTML = '';
+    PRESETS[st.mode].forEach((a) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip'; b.setAttribute('role', 'radio');
+      b.setAttribute('aria-checked', String(cur === a)); b.tabIndex = cur === a || (cur === null && a === PRESETS[st.mode][0]) ? 0 : -1;
+      b.textContent = a + '°'; b.dataset.angle = String(a);
+      b.addEventListener('click', () => { st.angle[st.mode] = a; st.customText[st.mode] = ''; customAngle.value = ''; renderAngles(); onTakeoffSource(); update(); });
+      b.addEventListener('keydown', (e) => {
+        const i = PRESETS[st.mode].indexOf(a); let j = -1;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') j = (i + 1) % PRESETS[st.mode].length;
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') j = (i + PRESETS[st.mode].length - 1) % PRESETS[st.mode].length;
+        if (j >= 0) { e.preventDefault(); (box.children[j] as HTMLElement).focus(); (box.children[j] as HTMLElement).click(); (box.children[j] as HTMLElement).focus(); }
+      });
+      box.appendChild(b);
+    });
+    $('angle-label').textContent = st.mode === 'pipe' ? 'Fitting angle' : 'Bend angle';
+    customAngle.value = st.customText[st.mode];
+  }
+  customAngle.addEventListener('input', () => {
+    const v = parseFloat(customAngle.value.replace(',', '.'));
+    st.customText[st.mode] = customAngle.value;
+    st.angle[st.mode] = customAngle.value.trim() === '' ? PRESETS[st.mode][1] : (Number.isFinite(v) ? v : NaN);
+    if (customAngle.value.trim() === '') { renderAngles(); }
+    else document.querySelectorAll('#angle-chips .chip').forEach((c) => c.setAttribute('aria-checked', 'false'));
+    onTakeoffSource(); update();
+  });
+
+  // ---- take-off table
+  function fillSizes() {
+    const m = TAKEOFF_45[material.value as keyof typeof TAKEOFF_45];
+    const prev = size.value;
+    size.innerHTML = '';
+    if (!m) { size.disabled = true; size.innerHTML = '<option value="">-</option>'; return; }
+    size.disabled = false;
+    Object.keys(m.sizes).forEach((k) => { const o = document.createElement('option'); o.value = k; o.textContent = k.replace('-', ' ') + '"'; size.appendChild(o); });
+    if (prev && [...size.options].some((o) => o.value === prev)) size.value = prev; else size.value = Object.keys(m.sizes)[1] || Object.keys(m.sizes)[0];
+  }
+  function currentAngle(): number { const a = st.angle[st.mode]; return a == null ? NaN : a; }
+  function onTakeoffSource() {
+    if (material.value in TAKEOFF_45) {
+      const v = takeoffFor(material.value, size.value, currentAngle());
+      inputs.takeoff.value = Number.isFinite(v) ? formatInches(Math.round(v * 16) / 16).frac.replace(/^0$/, '') : '';
+    } else if (material.value === '') inputs.takeoff.value = '';
+  }
+  material.addEventListener('change', () => { fillSizes(); onTakeoffSource(); update(); });
+  size.addEventListener('change', () => { onTakeoffSource(); update(); });
+  inputs.takeoff.addEventListener('input', () => { if (material.value in TAKEOFF_45) { material.value = 'custom'; fillSizes(); } });
+
+  // ---- fraction buttons act on the last field you used
+  (Object.keys(inputs) as (keyof typeof inputs)[]).forEach((k) => {
+    inputs[k].addEventListener('focus', () => { st.focus = k; fracTarget.textContent = NAMES[k]; });
+    inputs[k].addEventListener('input', update);
+  });
+  document.querySelectorAll<HTMLButtonElement>('.frac-btn').forEach((b) => {
+    b.addEventListener('pointerdown', (e) => e.preventDefault());
+    b.addEventListener('click', () => {
+      const el = inputs[st.focus];
+      const whole = Math.floor(parseLength(el.value.replace(/\s*\d+\/\d+\s*$/, '').trim() || '0') || 0);
+      const same = new RegExp('\\s' + b.dataset.frac!.replace('/', '\\/') + '$').test(el.value.trim());
+      el.value = same ? String(whole) : `${whole} ${b.dataset.frac}`;
+      if (st.focus === 'takeoff' && material.value in TAKEOFF_45) { material.value = 'custom'; fillSizes(); }
+      update();
+    });
+  });
+
+  // ---- mode switch
+  document.querySelectorAll<HTMLButtonElement>('[data-mode-btn]').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.modeBtn!)));
+  function setMode(m: string) {
+    st.mode = m; root.dataset.mode = m;
+    document.querySelectorAll<HTMLButtonElement>('[data-mode-btn]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.modeBtn === m)));
+    if (!(st.focus in inputs) || (m === 'emt' && st.focus === 'takeoff') || (m === 'pipe' && st.focus === 'mark1')) { st.focus = 'rise'; fracTarget.textContent = 'Rise'; }
+    renderAngles(); onTakeoffSource(); update();
+  }
+
+  // ---- calculation and output
+  const set = (id: string, frac: string, dec: string) => { $(id.replace('d-', 'v-')).textContent = frac || '–'; $(id).textContent = dec || ' '; };
+  const fmt = (x: number) => formatInches(x);
+  const q = (x: number) => { const f = fmt(x); return `${f.frac}" (${f.dec}")`; };
+  let lastText = '';
+
+  function field(el: HTMLInputElement, allowEmpty: boolean): number {
+    const raw = el.value.trim();
+    if (!raw) { el.setAttribute('aria-invalid', 'false'); return allowEmpty ? NaN : NaN; }
+    const v = parseLength(raw);
+    el.setAttribute('aria-invalid', String(!Number.isFinite(v)));
+    return v;
+  }
+
+  function update() {
+    const rise = field(inputs.rise, false), roll = field(inputs.roll, false);
+    const takeoff = st.mode === 'pipe' ? field(inputs.takeoff, true) : 0;
+    const mark1 = st.mode === 'emt' ? field(inputs.mark1, true) : NaN;
+    const angle = currentAngle();
+    const problems: string[] = [];
+    if (inputs.rise.getAttribute('aria-invalid') === 'true') problems.push('Rise: enter a number like 12, 12.5 or 12 1/2.');
+    if (inputs.roll.getAttribute('aria-invalid') === 'true') problems.push('Roll: enter a number like 9, 9.25 or 9 1/4.');
+    if (st.mode === 'pipe' && inputs.takeoff.getAttribute('aria-invalid') === 'true') problems.push('Take-off: enter a number like 3/8 or 0.375.');
+    if (st.mode === 'emt' && inputs.mark1.getAttribute('aria-invalid') === 'true') problems.push('First mark: enter a number like 10 or 10 1/2.');
+    if (!Number.isFinite(angle) || angle <= 0 || angle >= 90) problems.push('Angle: use a number above 0 and below 90.');
+    $('err').textContent = problems[0] || '';
+    customAngle.setAttribute('aria-invalid', String(!Number.isFinite(angle) || angle <= 0 || angle >= 90));
+
+    const r = Number.isFinite(rise) ? rise : (inputs.rise.value.trim() === '' ? 0 : NaN);
+    const l = Number.isFinite(roll) ? roll : (inputs.roll.value.trim() === '' ? 0 : NaN);
+    const c = calculate({ rise: r, roll: l, angle, takeoff: Number.isFinite(takeoff) ? takeoff : 0, firstMark: mark1 });
+    const emt = st.mode === 'emt';
+    $('l-travel').textContent = emt ? 'Distance between bends' : 'Travel';
+    $('l-key').textContent = emt ? 'Total shrink' : 'Cut length';
+    const extra = $('extra'); const rows: [string, string][] = [];
+    let note = '';
+    if (!c) {
+      ['d-offset', 'd-travel', 'd-run', 'd-key'].forEach((id) => set(id, '', ''));
+      note = problems.length ? '' : 'Enter a rise and a roll to see the answers.';
+      lastText = '';
+      drawDiagram(null, 0, 0);
+    } else {
+      set('d-offset', fmt(c.trueOffset).text, fmt(c.trueOffset).dec + ' in');
+      set('d-travel', fmt(c.travel).text, fmt(c.travel).dec + ' in');
+      set('d-run', fmt(c.run).text, fmt(c.run).dec + ' in');
+      if (emt) {
+        set('d-key', fmt(c.shrink).text, fmt(c.shrink).dec + ' in');
+        rows.push(['Multiplier', c.multiplier.toFixed(3)]);
+        rows.push(['Shrink per inch of offset', `${fmt(c.shrinkPerInch).text} (${c.shrinkPerInch.toFixed(3)})`]);
+        if (Number.isFinite(c.mark1)) { rows.push(['Mark 1', q(c.mark1)]); rows.push(['Mark 2 (mark 1 + distance)', q(c.mark2)]); }
+        rows.push(['Offset direction from rise', c.offsetAngle.toFixed(1) + '°']);
+        note = `Space the two bends ${fmt(c.travel).text} apart. Add ${fmt(c.shrink).text} of shrink to your overall length.`;
+      } else {
+        set('d-key', fmt(c.cut).text, fmt(c.cut).dec + ' in');
+        if (c.takeoff > 0) rows.push(['Take-off per fitting', q(c.takeoff)]);
+        rows.push(['Fitting angle', (Math.round(angle * 100) / 100) + '°']);
+        rows.push(['Offset direction from rise', c.offsetAngle.toFixed(1) + '°']);
+        note = c.takeoff > 0 ? (c.cut <= 0 ? 'The take-offs are longer than the travel. Check the numbers.' : `Cut length is the travel minus two take-offs of ${fmt(c.takeoff).text}.`)
+          : 'No take-off set, so cut length equals travel (center to center). Pick a pipe and size to subtract the fittings.';
+      }
+      lastText = [
+        `Rolling offset (${emt ? 'EMT conduit' : 'pipe'}): rise ${fmt(r).frac}", roll ${fmt(l).frac}", ${Math.round(angle * 100) / 100} degrees`,
+        `True offset: ${q(c.trueOffset)}`,
+        emt ? `Distance between bends: ${q(c.travel)}` : `Travel: ${q(c.travel)}`,
+        `Run: ${q(c.run)}`,
+        emt ? `Total shrink: ${q(c.shrink)}` : `Cut length: ${q(c.cut)}${c.takeoff > 0 ? ` (take-off ${fmt(c.takeoff).frac}" per fitting)` : ''}`,
+      ].join('\n');
+      drawDiagram(c, r, l);
+    }
+    extra.innerHTML = rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+    $('note').textContent = note;
+    save();
+  }
+
+  // ---- diagram: an oblique box. Roll runs right, rise runs up, run runs back.
+  const NS = 'http://www.w3.org/2000/svg';
+  function drawDiagram(c: ReturnType<typeof calculate>, rise: number, roll: number) {
+    const lines = $('dg-lines'); const labels = $('dg-labels'); const box = $('dg-box');
+    const ids = ['roll', 'rise', 'run', 'offset', 'travel'];
+    if (!c) { ids.forEach((i) => $('dg-' + i).setAttribute('opacity', '0')); labels.innerHTML = ''; box.innerHTML = ''; $('dg-s').setAttribute('opacity', '0'); $('dg-e').setAttribute('opacity', '0'); return; }
+    ids.forEach((i) => $('dg-' + i).setAttribute('opacity', '1')); $('dg-s').setAttribute('opacity', '1'); $('dg-e').setAttribute('opacity', '1');
+    const mx = Math.max(roll, rise, c.run) || 1;
+    let w = Math.max(roll, 0.14 * mx), h = Math.max(rise, 0.14 * mx), d = Math.max(c.run, 0.14 * mx);
+    if (roll === 0) w = 0; if (rise === 0) h = 0;
+    const kx = 0.6, ky = 0.4;
+    const s = Math.min(290 / (w + kx * d || 1), 150 / (h + ky * d || 1));
+    w *= s; h *= s; d *= s;
+    const O = { x: 44 + (290 - (w + kx * d)) / 2, y: 218 };
+    const P = (x: number, y: number, z: number) => [O.x + x + kx * z, O.y - y - ky * z];
+    const S = P(0, 0, 0), A = P(w, 0, 0), B = P(w, h, 0), E = P(w, h, d);
+    const L = (id: string, a: number[], b: number[]) => { const e = $(id); e.setAttribute('x1', a[0].toFixed(1)); e.setAttribute('y1', a[1].toFixed(1)); e.setAttribute('x2', b[0].toFixed(1)); e.setAttribute('y2', b[1].toFixed(1)); };
+    L('dg-roll', S, A); L('dg-rise', A, B); L('dg-run', B, E); L('dg-offset', S, B); L('dg-travel', S, E);
+    $('dg-s').setAttribute('cx', S[0].toFixed(1)); $('dg-s').setAttribute('cy', S[1].toFixed(1));
+    $('dg-e').setAttribute('cx', E[0].toFixed(1)); $('dg-e').setAttribute('cy', E[1].toFixed(1));
+    const c8 = [P(0, 0, 0), P(w, 0, 0), P(w, h, 0), P(0, h, 0), P(0, 0, d), P(w, 0, d), P(w, h, d), P(0, h, d)];
+    const edges = [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]];
+    box.innerHTML = edges.map(([i, j]) => `<line x1="${c8[i][0].toFixed(1)}" y1="${c8[i][1].toFixed(1)}" x2="${c8[j][0].toFixed(1)}" y2="${c8[j][1].toFixed(1)}"/>`).join('');
+    const mid = (a: number[], b: number[]) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    const T = (p: number[], dx: number, dy: number, anchor: string, k: string, v: string, color: string) =>
+      `<text x="${(p[0] + dx).toFixed(1)}" y="${(p[1] + dy).toFixed(1)}" text-anchor="${anchor}"><tspan class="k">${k} </tspan><tspan class="v" style="fill:${color}">${v}</tspan></text>`;
+    labels.innerHTML =
+      T(mid(S, A), 0, 20, 'middle', 'Roll', fmt(roll).frac + '"', 'var(--c-roll)') +
+      T(mid(A, B), 10, 5, 'start', 'Rise', fmt(rise).frac + '"', 'var(--c-rise)') +
+      T(mid(B, E), -6, -8, 'end', 'Run', fmt(c.run).frac + '"', 'var(--c-run)') +
+      T(mid(S, B), -9, -7, 'end', 'True offset', fmt(c.trueOffset).frac + '"', 'var(--c-offset)') +
+      T([S[0] + 0.7 * (E[0] - S[0]), S[1] + 0.7 * (E[1] - S[1])], 12, 20, 'start', 'Travel', fmt(c.travel).frac + '"', 'var(--ink)');
+  }
+
+  // ---- copy
+  $('copy').addEventListener('click', async () => {
+    if (!lastText) return;
+    let ok = false;
+    try { await navigator.clipboard.writeText(lastText); ok = true; } catch {
+      const t = document.createElement('textarea'); t.value = lastText; document.body.appendChild(t); t.select();
+      try { ok = document.execCommand('copy'); } catch {} t.remove();
+    }
+    $('copied').textContent = ok ? 'Copied' : 'Copy failed';
+    setTimeout(() => { $('copied').textContent = ''; }, 2000);
+  });
+
+  // ---- start
+  load();
+  fillSizes();
+  if (!['pipe', 'emt'].includes(st.mode)) st.mode = 'pipe';
+  root.dataset.mode = st.mode;
+  document.querySelectorAll<HTMLButtonElement>('[data-mode-btn]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.modeBtn === st.mode)));
+  renderAngles();
+  if (st.angle[st.mode] != null && !PRESETS[st.mode].includes(st.angle[st.mode] as number)) customAngle.value = st.customText[st.mode];
+  update();
+</script>

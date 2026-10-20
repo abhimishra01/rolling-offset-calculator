@@ -1,0 +1,91 @@
+---
+// SEO article. Plain text, written for tradespeople.
+---
+<section aria-labelledby="about-tool" class="mx-auto max-w-5xl px-4 pt-16">
+  <article class="prose-site">
+    <h2 id="about-tool" style="margin-top:0">What is a rolling offset?</h2>
+    <p>A rolling offset moves a run of pipe or conduit up and sideways at the same time. The run ends on a new line that is parallel to the old one. You need it when a beam, a duct, a wall or another pipe is in the way and the path is not flat or square. This rolling offset calculator gives you every number you need to lay it out: the true offset, the travel, the run and the cut length.</p>
+
+    <h2>What each number means</h2>
+    <ul>
+      <li><strong>Rise</strong> is the vertical distance between the two center lines.</li>
+      <li><strong>Roll</strong> is the sideways distance between the two center lines.</li>
+      <li><strong>True offset</strong> (the set) is the straight distance between the center lines. It is the diagonal across the rise and the roll.</li>
+      <li><strong>Travel</strong> is the center to center length of the angled piece between the two fittings.</li>
+      <li><strong>Run</strong> is how far the offset moves along the pipe. It is the length the offset uses up on the straight line.</li>
+    </ul>
+
+    <h2>How to use the calculator</h2>
+    <ol>
+      <li>Measure the rise and the roll from center line to center line, in inches.</li>
+      <li>Type them in. Use decimals such as 12.5, or fractions such as 12 1/2. The fraction buttons add 1/8 inch steps on a phone.</li>
+      <li>Pick the fitting angle: 22.5, 45 or 60 degrees, or type your own.</li>
+      <li>For pipe, pick the pipe type and size to subtract the fitting take-off. The tool then shows the cut length.</li>
+      <li>For EMT, switch to conduit mode and pick the bend angle. The tool shows the distance between bends and the shrink.</li>
+    </ol>
+
+    <h2>Which fitting angle should you use?</h2>
+    <p>Most plumbers use 45 degree fittings. They are easy to stock, and they keep the offset short. A 22.5 degree fitting makes a long, gentle offset that is good for drain lines. A 60 degree fitting makes a short, steep offset when space is tight, but it slows the flow more. A smaller angle always makes a longer travel for the same offset. Try each angle in the tool and compare the run.</p>
+
+    <h2>The formulas</h2>
+    <p>The math is right-triangle geometry. These are the steps the calculator follows.</p>
+    <ul>
+      <li>True offset = the square root of (rise squared + roll squared)</li>
+      <li>Travel = true offset / sin(angle)</li>
+      <li>Run = true offset / tan(angle)</li>
+      <li>Cut length = travel - 2 x take-off</li>
+    </ul>
+
+    <h2>Worked example</h2>
+    <p>A copper line must clear a duct. The rise is 12 inches and the roll is 9 inches. You use 45 degree fittings.</p>
+    <ol>
+      <li>True offset = the square root of (144 + 81) = 15 inches.</li>
+      <li>Travel = 15 / sin 45 = 21.21 inches, or about 21 3/16 inches.</li>
+      <li>Run = 15 / tan 45 = 15 inches.</li>
+      <li>The 3/4 inch copper fitting has a take-off of about 3/8 inch. Cut length = 21.21 - 0.75 = 20.46 inches, or about 20 7/16 inches.</li>
+    </ol>
+
+    <h2>Common rise and roll values</h2>
+    <p>These pairs give a whole number for the true offset. The travel is for 45 degree fittings.</p>
+    <div class="table-wrap">
+      <table>
+        <caption class="sr-only">True offset and travel for common rise and roll pairs at 45 degrees</caption>
+        <thead><tr><th scope="col">Rise</th><th scope="col">Roll</th><th scope="col">True offset</th><th scope="col">Travel at 45&deg;</th></tr></thead>
+        <tbody>
+          <tr><td>3</td><td>4</td><td>5</td><td>7.07</td></tr>
+          <tr><td>6</td><td>8</td><td>10</td><td>14.14</td></tr>
+          <tr><td>5</td><td>12</td><td>13</td><td>18.38</td></tr>
+          <tr><td>12</td><td>9</td><td>15</td><td>21.21</td></tr>
+          <tr><td>8</td><td>15</td><td>17</td><td>24.04</td></tr>
+          <tr><td>24</td><td>7</td><td>25</td><td>35.36</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Rolling offset in EMT conduit</h2>
+    <p>Conduit is bent, not fitted, so the rules change a little. The bender angle sets two numbers. The multiplier is one divided by the sine of the angle. Multiply the true offset by it to get the distance between the two bends. Shrink is the length the conduit loses when you bend it. It equals the true offset times the tangent of half the angle.</p>
+    <div class="table-wrap">
+      <table>
+        <caption class="sr-only">Multiplier and shrink per inch of offset by bend angle</caption>
+        <thead><tr><th scope="col">Bend angle</th><th scope="col">Multiplier</th><th scope="col">Shrink per inch of offset</th></tr></thead>
+        <tbody>
+          <tr><td>10&deg;</td><td>5.76</td><td>0.087 in</td></tr>
+          <tr><td>22.5&deg;</td><td>2.61</td><td>0.199 in (about 3/16)</td></tr>
+          <tr><td>30&deg;</td><td>2.00</td><td>0.268 in (about 1/4)</td></tr>
+          <tr><td>45&deg;</td><td>1.41</td><td>0.414 in (about 3/8)</td></tr>
+          <tr><td>60&deg;</td><td>1.15</td><td>0.577 in</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Example: the true offset is 15 inches and you bend at 30 degrees. The bends go 30 inches apart. The shrink is about 4 inches. The "offset direction" line in the tool tells you how far to rotate the conduit between the two bends, measured from the rise direction.</p>
+
+    <h2>Tips for a clean job</h2>
+    <ul>
+      <li>Measure to the center of the pipe, not to the edge. For conduit, measure to the center of the tube.</li>
+      <li>Use the same fitting angle on both ends of the offset.</li>
+      <li>Check the take-off against the fittings in your hand. Sizes differ between makers.</li>
+      <li>Dry fit the piece before you glue, solder or weld.</li>
+      <li>If the cut length comes out zero or negative, the fittings are too large for that offset. Use a smaller angle or a longer rise and roll.</li>
+    </ul>
+  </article>
+</section>
