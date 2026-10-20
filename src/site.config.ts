@@ -13,7 +13,8 @@ export default {
   email: 'hello@rollingoffsetcalculator.com',       // contact email (shown on Contact and Privacy pages)
   ga4: '',                            // GA4 measurement ID, e.g. 'G-XXXXXXXXXX'. Empty = Google Analytics off
   adsense: '',                        // AdSense publisher ID, e.g. 'ca-pub-1234567890123456'. Empty = ads off
-  brand: '#a84c08',                   // brand color (hex). Dark enough for 4.5:1 contrast with white text
+  brand: '#0e7490',                   // brand color (hex). Dark enough for 4.5:1 contrast with white text
+  skin: 'swiss',                      // visual skin: minimal, swiss, clay or retro
   locale: 'en-US',                    // BCP 47 language tag
   ogImage: 'og.png',                         // file in public/ (1200x630), no leading slash. Empty = no image
   ogAlt: 'Rolling offset calculator for pipe and EMT conduit',  // alt text for the preview image

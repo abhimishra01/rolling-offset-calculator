@@ -142,7 +142,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
   #tool .sw-run { background: var(--c-run); }
   #tool .sw-offset { background: var(--c-offset); }
   #tool .sw-travel { background: var(--c-travel); }
-  #tool .fld { display: block; width: 100%; min-height: 3rem; margin-top: .3rem; padding: .5rem .75rem; border: 1px solid var(--line);
+  #tool .fld { display: block; width: 100%; min-height: 3rem; margin-top: .3rem; padding: .5rem .75rem; border: 1px solid var(--edge);
     border-radius: .75rem; background: var(--paper); color: var(--ink); font-size: 1.25rem; font-variant-numeric: tabular-nums; outline: none; }
   #tool .fld-sm { min-height: 2.75rem; font-size: 1rem; }
   #tool select.fld { appearance: auto; }
@@ -153,7 +153,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
   #tool .seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .12); outline: 1px solid var(--line); }
   :root[data-theme="dark"] #tool .seg { background: var(--paper); outline: 1px solid var(--line); }
   :root[data-theme="dark"] #tool .seg button[aria-pressed="true"] { background: #26272c; }
-  #tool .chip { min-height: 2.75rem; min-width: 2.75rem; padding: 0 .75rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--paper);
+  #tool .chip { min-height: 2.75rem; min-width: 2.75rem; padding: 0 .75rem; border: 1px solid var(--edge); border-radius: .75rem; background: var(--paper);
     color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; }
   #tool .chip:hover { border-color: var(--brand); }
   #tool .chip[aria-checked="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
@@ -169,7 +169,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
   #tool .res-key b { color: #fff; }
   #extra > div { display: flex; justify-content: space-between; gap: 1rem; padding: .5rem 0; }
   #extra dt { color: var(--muted); } #extra dd { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
-  #tool .btn { min-height: 2.75rem; padding: 0 1.1rem; border: 1px solid var(--line); border-radius: 999px; background: var(--card); font-weight: 600; cursor: pointer; }
+  #tool .btn { min-height: 2.75rem; padding: 0 1.1rem; border: 1px solid var(--edge); border-radius: 999px; background: var(--card); font-weight: 600; cursor: pointer; }
   #tool .btn:hover { border-color: var(--brand); }
   #tool .blueprint { background-color: var(--paper);
     background-image: radial-gradient(color-mix(in oklab, var(--ink) 14%, transparent) 1px, transparent 1.2px); background-size: 16px 16px; }
