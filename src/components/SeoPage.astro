@@ -1,0 +1,60 @@
+---
+// One job page: heading, calculator with a preset, charts and text, FAQ, links to the other job pages.
+import Base from '../layouts/Base.astro';
+import Tool from './Tool.astro';
+import AdSlot from './AdSlot.astro';
+import JobLinks from './JobLinks.astro';
+import site from '../site.config.ts';
+import { url } from '../lib/url.ts';
+import type { SeoPage } from '../data/seo-pages.ts';
+interface Props { page: SeoPage; }
+const { page } = Astro.props;
+const base = `https://${site.domain}`;
+const jsonLd = [
+  {
+    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: site.name, item: `${base}/` },
+      { '@type': 'ListItem', position: 2, name: page.h1, item: `${base}/${page.slug}/` },
+    ],
+  },
+  {
+    '@context': 'https://schema.org', '@type': 'FAQPage',
+    mainEntity: page.faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  },
+];
+---
+<Base title={page.title} description={page.description} jsonLd={jsonLd}>
+  <section class="mx-auto max-w-5xl px-4 pt-10 sm:pt-16">
+    <p class="mb-3 inline-block rounded-full bg-brand-soft px-3 py-1 text-sm font-medium text-brand-ink"><a href={url()} class="no-underline">Rolling Offset Calculator</a> / {page.label}</p>
+    <h1 class="max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight [text-wrap:balance] sm:text-6xl">{page.h1}</h1>
+    <p class="mt-4 max-w-2xl text-lg text-muted">{page.lead}</p>
+    <div class="mt-8 min-h-[22rem]"><Tool preset={page.preset} /></div>
+    <AdSlot />
+  </section>
+  <section class="mx-auto max-w-5xl px-4 pt-16">
+    <article class="prose-site">
+      {page.blocks.map((b, i) => (
+        <>
+          <h2 style={i === 0 ? 'margin-top:0' : undefined}>{b.h}</h2>
+          {b.p?.map((t) => <p>{t}</p>)}
+          {b.ul && <ul>{b.ul.map((t) => <li set:html={t} />)}</ul>}
+          {b.ol && <ol>{b.ol.map((t) => <li>{t}</li>)}</ol>}
+          {b.table && (
+            <div class="table-wrap">
+              <table>
+                <caption class="sr-only">{b.table.caption}</caption>
+                <thead><tr>{b.table.head.map((h) => <th scope="col">{h}</th>)}</tr></thead>
+                <tbody>{b.table.rows.map((r) => <tr>{r.map((c, j) => (j === 0 ? <th scope="row" style="background:none;font-weight:600">{c}</th> : <td>{c}</td>))}</tr>)}</tbody>
+              </table>
+            </div>
+          )}
+          {b.after?.map((t) => <p>{t}</p>)}
+        </>
+      ))}
+      <h2>Questions</h2>
+      {page.faq.map((f) => <><h3 style="font-weight:650;margin:1rem 0 .25rem">{f.q}</h3><p>{f.a}</p></>)}
+    </article>
+  </section>
+  <JobLinks current={page.slug} />
+</Base>

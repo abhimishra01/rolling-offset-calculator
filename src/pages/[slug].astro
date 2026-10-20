@@ -1,0 +1,7 @@
+---
+import SeoPage from '../components/SeoPage.astro';
+import { pages, bySlug } from '../data/seo-pages.ts';
+export function getStaticPaths() { return pages.map((p) => ({ params: { slug: p.slug } })); }
+const { slug } = Astro.params;
+---
+<SeoPage page={bySlug(slug!)} />

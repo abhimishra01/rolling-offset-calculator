@@ -1,0 +1,17 @@
+---
+// Links to the job pages. Shown on the home page and at the bottom of every job page.
+import { pages } from '../data/seo-pages.ts';
+import { url } from '../lib/url.ts';
+interface Props { current?: string; }
+const { current } = Astro.props;
+const list = pages.filter((p) => p.slug !== current);
+---
+<section aria-labelledby="jobs-h" class="mx-auto max-w-5xl px-4 pt-16">
+  <h2 id="jobs-h" class="text-2xl font-bold tracking-tight">Calculators for specific jobs</h2>
+  <p class="mt-2 max-w-2xl text-muted">Each page opens the calculator with the right settings and adds the charts for that job.</p>
+  <ul class="mt-4 grid gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
+    {list.map((p) => (
+      <li class="border-t border-line"><a href={url(p.slug + '/')} class="flex min-h-11 items-center py-2 font-medium text-brand-ink underline-offset-4 hover:underline">{p.h1}</a></li>
+    ))}
+  </ul>
+</section>

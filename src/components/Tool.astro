@@ -1,16 +1,26 @@
 ---
 // The calculator. Inputs first, then results and the diagram (side by side on wide screens).
 // Result slots are always in the DOM, so the page never jumps while you type.
-import { TAKEOFF } from '../lib/offset.js';
+import { TAKEOFF, LAST_CHECKED } from '../lib/offset.js';
+import { url } from '../lib/url.ts';
+interface Props { preset?: { mode: 'pipe' | 'emt'; angle: number; material?: string; size?: string }; }
+const { preset } = Astro.props;
 const materials = TAKEOFF.map(({ id, label }) => ({ id, label }));
 const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
 ---
-<section id="tool" aria-label="Rolling offset calculator" data-mode="pipe"
+<section id="tool" aria-label="Rolling offset calculator" data-mode="pipe" data-preset={preset ? JSON.stringify(preset) : undefined}
   class="rounded-2xl border border-line bg-card p-4 sm:p-6 sm:shadow-[6px_6px_0_0_var(--line)]">
 
-  <div role="group" aria-label="Calculator type" class="seg grid grid-cols-2 gap-1 rounded-xl bg-brand-soft p-1 sm:inline-grid sm:w-80">
-    <button type="button" data-mode-btn="pipe" aria-pressed="true">Pipe</button>
-    <button type="button" data-mode-btn="emt" aria-pressed="false">EMT conduit</button>
+  <p class="hidden print:block text-sm" id="print-head"><strong>Rolling offset job ticket</strong> <span id="print-url"></span></p>
+  <div class="flex flex-wrap items-center gap-3 print:hidden">
+    <div role="group" aria-label="Calculator type" class="seg grid grid-cols-2 gap-1 rounded-xl bg-brand-soft p-1 sm:inline-grid sm:w-80">
+      <button type="button" data-mode-btn="pipe" aria-pressed="true">Pipe</button>
+      <button type="button" data-mode-btn="emt" aria-pressed="false">EMT conduit</button>
+    </div>
+    <div role="group" aria-label="Units" class="seg grid w-40 grid-cols-2 gap-1 rounded-xl bg-brand-soft p-1">
+      <button type="button" data-unit-btn="in" aria-pressed="true">in</button>
+      <button type="button" data-unit-btn="mm" aria-pressed="false">mm</button>
+    </div>
   </div>
 
   <div class="mt-5 grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:gap-8">
@@ -60,19 +70,23 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
             </select>
           </div>
           <div>
-            <label for="size" class="text-sm text-muted">Size (in)</label>
+            <label for="size" class="text-sm text-muted">Nominal size (in)</label>
             <select id="size" class="fld fld-sm" disabled></select>
           </div>
         </div>
         <div>
-          <label for="takeoff" class="text-sm text-muted">Take-off per fitting (in)</label>
+          <label for="takeoff" class="text-sm text-muted">Take-off per fitting (<span class="unit-name">in</span>)</label>
           <input id="takeoff" type="text" inputmode="decimal" class="fld fld-sm" placeholder="0" spellcheck="false" />
         </div>
         <p id="takeoff-note" class="text-xs text-muted"></p>
+        <div>
+          <label for="fit" class="text-sm text-muted">Room for the run (optional, <span class="unit-name">in</span>)</label>
+          <input id="fit" type="text" inputmode="decimal" class="fld fld-sm" placeholder="e.g. 18" spellcheck="false" />
+        </div>
       </div>
 
       <div data-only="emt" class="space-y-2 rounded-xl border border-line p-3">
-        <label for="mark1" class="text-sm font-semibold">First mark from the conduit end <span class="font-normal text-muted">(optional, in)</span></label>
+        <label for="mark1" class="text-sm font-semibold">First mark from the conduit end <span class="font-normal text-muted">(optional, <span class="unit-name">in</span>)</span></label>
         <input id="mark1" type="text" inputmode="decimal" class="fld fld-sm" placeholder="e.g. 10" spellcheck="false" />
       </div>
 
@@ -90,10 +104,15 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
         </dl>
         <p id="note" class="mt-2 min-h-[2.5rem] text-sm text-muted"></p>
         <dl id="extra" class="mt-1 divide-y divide-line border-y border-line text-sm"></dl>
+        <div class="table-wrap mt-4 overflow-x-auto">
+          <table id="alts" class="w-full text-sm"><caption id="alts-cap" class="pb-1 text-left text-sm font-semibold"></caption><thead></thead><tbody></tbody></table>
+        </div>
       </div>
 
-      <div class="mt-4 flex flex-wrap items-center gap-3">
+      <div class="mt-4 flex flex-wrap items-center gap-3 print:hidden">
         <button type="button" id="copy" class="btn">Copy results as text</button>
+        <button type="button" id="share" class="btn">Copy link</button>
+        <button type="button" id="print" class="btn">Print</button>
         <button type="button" id="reset" class="btn">Reset</button>
         <span id="copied" class="text-sm text-muted" role="status"></span>
       </div>
@@ -115,6 +134,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
         </svg>
         <figcaption id="dg-cap" class="px-1 pt-1 text-xs text-muted">Not to scale. Dots are the pipe center lines at each fitting. Travel is the long diagonal through the box.</figcaption>
       </figure>
+      <p class="mt-3 text-xs text-muted">Formulas: true offset = &radic;(rise&sup2; + roll&sup2;), travel = true offset &divide; sin(angle), run = true offset &divide; tan(angle). Right-triangle geometry, <a class="underline" href={url('rolling-offset-formula/')}>explained here</a>. Formulas and take-off sources last checked {LAST_CHECKED}.</p>
     </div>
   </div>
 </section>
@@ -193,43 +213,67 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
   .sticky-bar b { display: block; font-size: 1.05rem; font-weight: 750; overflow-wrap: anywhere; }
   .sticky-bar .s-key b { color: var(--brand-ink); }
   @media (min-width: 1024px) { .sticky-bar { display: none; } }
+  #tool #alts th, #tool #alts td { text-align: left; padding: .35rem .5rem .35rem 0; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  #tool #alts th { font-weight: 600; color: var(--muted); font-size: .8rem; }
+  #tool #alts tr.cur td { font-weight: 700; }
+  #tool #frac[hidden] { display: none; }
+  @media print {
+    :root[data-theme][data-skin], :root { --paper: #fff; --card: #fff; --ink: #000; --muted: #333; --line: #999; --edge: #000; --fill: #fff; --brand: #000; --brand-ink: #000; --brand-soft: #fff; }
+    html, body { background: #fff !important; color: #000; }
+    header, footer, #sticky, #frac, #angle-custom, main > section:not(:first-child), main > section:first-child > p, main > section:first-child > h1 + p { display: none !important; }
+    #tool .res-key { background: #fff !important; border: 2px solid #000 !important; }
+    #tool .res-key dt, #tool .res-key small, #tool .res-key b { color: #000 !important; }
+    #tool .seg { display: none; }
+  }
 </style>
 
 <script>
-  import { parseLength, formatInches, calculate, takeoffFor, isApproximate, materialById } from '../lib/offset.js';
-  import { PRESETS, DEFAULT_ANGLE, parseAngle, applyFraction, fractionText, sanitizeSaved } from '../lib/inputs.js';
+  import { parseLength, parseMm, formatInches, formatMm, calculate, takeoffFor, isApproximate, materialById, fittingRoll, alternatives, fitsInRun, INCH_MM } from '../lib/offset.js';
+  import { PRESETS, DEFAULT_ANGLE, parseAngle, applyFraction, fractionText, sanitizeSaved, encodeShare, decodeShare } from '../lib/inputs.js';
 
   const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
   const root = $('tool');
-  const inputs = { rise: $<HTMLInputElement>('rise'), roll: $<HTMLInputElement>('roll'), takeoff: $<HTMLInputElement>('takeoff'), mark1: $<HTMLInputElement>('mark1') };
+  const inputs = { rise: $<HTMLInputElement>('rise'), roll: $<HTMLInputElement>('roll'), takeoff: $<HTMLInputElement>('takeoff'), mark1: $<HTMLInputElement>('mark1'), fit: $<HTMLInputElement>('fit') };
   const customAngle = $<HTMLInputElement>('angle-custom');
   const material = $<HTMLSelectElement>('material');
   const size = $<HTMLSelectElement>('size');
   const fracTarget = $('frac-target');
   const fracMsg = $('frac-msg');
-  const NAMES: Record<string, string> = { rise: 'Rise', roll: 'Roll', takeoff: 'Take-off', mark1: 'First mark' };
+  const NAMES: Record<string, string> = { rise: 'Rise', roll: 'Roll', takeoff: 'Take-off', mark1: 'First mark', fit: 'Room' };
   const START = { rise: '12', roll: '9' };
 
   // angle[mode] is a number, or NaN while the custom field holds something that is not an angle.
-  const st = { mode: 'pipe', angle: { ...DEFAULT_ANGLE } as Record<string, number>, customText: { pipe: '', emt: '' } as Record<string, string>, focus: 'rise' as keyof typeof inputs };
+  const st = { mode: 'pipe', unit: 'in', angle: { ...DEFAULT_ANGLE } as Record<string, number>, customText: { pipe: '', emt: '' } as Record<string, string>, focus: 'rise' as keyof typeof inputs };
 
   // ---- saved choices (a convenience only; the page works without it)
   const KEY = 'roc-v1';
   function save() {
+    if (root.dataset.preset) return; // a job page starts fresh each visit and does not touch the saved choices
     try {
       localStorage.setItem(KEY, JSON.stringify({ mode: st.mode, angle: st.angle, customText: st.customText,
-        rise: inputs.rise.value, roll: inputs.roll.value, takeoff: inputs.takeoff.value, mark1: inputs.mark1.value, material: material.value, size: size.value }));
+        rise: inputs.rise.value, roll: inputs.roll.value, takeoff: inputs.takeoff.value, mark1: inputs.mark1.value, fit: inputs.fit.value, unit: st.unit, material: material.value, size: size.value }));
     } catch {}
   }
+  /** Apply a checked state object to the form. */
+  function apply(s: NonNullable<ReturnType<typeof sanitizeSaved>>) {
+    st.mode = s.mode; st.unit = s.unit; st.angle = s.angle; st.customText = s.customText;
+    for (const k of ['rise', 'roll', 'takeoff', 'mark1', 'fit'] as const) inputs[k].value = s[k];
+    material.value = s.material;
+    fillSizes();
+    if ([...size.options].some((o) => o.value === s.size)) size.value = s.size;
+  }
+  // Start-up order: a share link in the address wins, then the page preset, then the saved choices.
   function load() {
     try {
+      const preset = root.dataset.preset ? JSON.parse(root.dataset.preset) : null;
+      const shared = sanitizeSaved(decodeShare(location.hash));
+      if (shared) { apply(shared); return; }
+      if (preset) {
+        apply(sanitizeSaved({ mode: preset.mode, angle: { [preset.mode]: preset.angle }, rise: START.rise, roll: START.roll, material: preset.material || '', size: preset.size || '' })!);
+        return;
+      }
       const s = sanitizeSaved(JSON.parse(localStorage.getItem(KEY) || 'null'));
-      if (!s) return;
-      st.mode = s.mode; st.angle = s.angle; st.customText = s.customText;
-      for (const k of ['rise', 'roll', 'takeoff', 'mark1'] as const) inputs[k].value = s[k];
-      material.value = s.material;
-      fillSizes();
-      if ([...size.options].some((o) => o.value === s.size)) size.value = s.size;
+      if (s) apply(s);
     } catch {}
   }
 
@@ -283,7 +327,7 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
     if (!materialById(material.value)) return; // "Not set" and "My number" leave the box alone
     const a = currentAngle();
     const v = takeoffFor(material.value, size.value, a);
-    inputs.takeoff.value = !Number.isFinite(v) ? '' : a === 45 ? fractionText(v) : String(Math.round(v * 1000) / 1000);
+    inputs.takeoff.value = !Number.isFinite(v) ? '' : st.unit === 'mm' ? String(Math.round(v * INCH_MM * 100) / 100) : a === 45 ? fractionText(v) : String(Math.round(v * 1000) / 1000);
   }
   /** Typing in the take-off box (or tapping a fraction on it) makes it "My number" so nothing overwrites it. */
   function takeoffIsMine() { if (material.value !== 'custom') { material.value = 'custom'; fillSizes(); } }
@@ -331,44 +375,75 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
 
   // ---- reset
   $('reset').addEventListener('click', () => {
-    inputs.rise.value = START.rise; inputs.roll.value = START.roll; inputs.takeoff.value = ''; inputs.mark1.value = '';
-    material.value = ''; fillSizes();
+    st.unit = 'in'; inputs.rise.value = START.rise; inputs.roll.value = START.roll; inputs.takeoff.value = ''; inputs.mark1.value = ''; inputs.fit.value = '';
+    material.value = ''; fillSizes(); applyUnitUi();
     st.angle = { ...DEFAULT_ANGLE }; st.customText = { pipe: '', emt: '' };
     fracMsg.textContent = '';
     renderAngles(); update();
   });
 
-  // ---- calculation and output
-  const set = (name: string, frac: string, dec: string) => { $('v-' + name).textContent = frac || '–'; $('d-' + name).textContent = dec || ' '; };
-  const fmt = (x: number) => formatInches(x);
-  const q = (x: number) => { const f = fmt(x); return `${f.frac}" (${f.dec}")`; };
+  // ---- units: inches (fractions to 1/16) or millimeters. All math stays in inches.
+  const mm = () => st.unit === 'mm';
+  const parseU = (t: string) => (mm() ? parseMm(t) : parseLength(t));
+  const trimMm = (x: number) => String(Number((x * INCH_MM).toFixed(1)));
+  /** Big number and the line under it. */
+  const lens = (x: number) => (mm() ? { text: formatMm(x).text, sub: formatInches(x).text } : { text: formatInches(x).text, sub: formatInches(x).dec + ' in' });
+  /** One line: "15" (15.00")" or "381.0 mm (15")". */
+  const q = (x: number) => (mm() ? `${formatMm(x).text} (${formatInches(x).text})` : `${formatInches(x).frac}" (${formatInches(x).dec}")`);
+  /** Short label for the diagram and copy text. */
+  const lab = (x: number) => (mm() ? trimMm(x) + ' mm' : formatInches(x).frac + '"');
   /** A take-off keeps its exact value (11/32 stays 11/32), because it counts twice in the cut length. */
-  const tk = (x: number) => `${fractionText(x)}" (${x.toFixed(3)}")`;
+  const tk = (x: number) => (mm() ? `${Math.round(x * INCH_MM * 100) / 100} mm (${fractionText(x)}")` : `${fractionText(x)}" (${x.toFixed(3)}")`);
+  const set = (name: string, text: string, sub: string) => { $('v-' + name).textContent = text || '–'; $('d-' + name).textContent = sub || ' '; };
   let lastText = '';
   let srTimer = 0;
+
+  /** Change the labels, hints and placeholders for the chosen unit. */
+  function applyUnitUi() {
+    document.querySelectorAll<HTMLButtonElement>('[data-unit-btn]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.unitBtn === st.unit)));
+    document.querySelectorAll('.unit-name').forEach((e) => { e.textContent = mm() ? 'mm' : 'in'; });
+    $('dim-hint').textContent = mm() ? 'Millimeters, center to center. Type 305 or 305.5.' : `Inches, center to center. Type 12.5, 12 1/2 or 2'-3 1/2".`;
+    $('frac').hidden = mm();
+    inputs.mark1.placeholder = mm() ? 'e.g. 250' : 'e.g. 10';
+    inputs.fit.placeholder = mm() ? 'e.g. 450' : 'e.g. 18';
+  }
+  document.querySelectorAll<HTMLButtonElement>('[data-unit-btn]').forEach((b) => b.addEventListener('click', () => {
+    const next = b.dataset.unitBtn!;
+    if (next === st.unit) return;
+    // Convert what is typed, so the same size stays the same size.
+    const vals = (Object.keys(inputs) as (keyof typeof inputs)[]).map((k) => [k, inputs[k].value.trim() ? parseU(inputs[k].value) : NaN] as const);
+    st.unit = next;
+    for (const [k, v] of vals) if (Number.isFinite(v)) inputs[k].value = mm() ? trimMm(v) : formatInches(v).frac;
+    if (st.focus === 'takeoff' || mm()) fracMsg.textContent = '';
+    applyUnitUi(); onTakeoffSource(); update();
+  }));
 
   /** Read a length field. Empty is NaN here; the caller decides what empty means. */
   function field(el: HTMLInputElement): number {
     const raw = el.value.trim();
     if (!raw) { el.setAttribute('aria-invalid', 'false'); return NaN; }
-    const v = parseLength(raw);
+    const v = parseU(raw);
     el.setAttribute('aria-invalid', String(!Number.isFinite(v)));
     return v;
   }
   const bad = (el: HTMLInputElement) => el.getAttribute('aria-invalid') === 'true';
+  const deg = (a: number) => String(Math.round(a * 100) / 100);
 
   function update() {
     const emt = st.mode === 'emt';
     const riseV = field(inputs.rise), rollV = field(inputs.roll);
     const takeoffV = emt ? NaN : field(inputs.takeoff);
     const mark1 = emt ? field(inputs.mark1) : NaN;
+    const fitV = emt ? NaN : field(inputs.fit);
     const angle = currentAngle();
     const angleBad = !(angle > 0 && angle < 90);
     const problems: string[] = [];
-    if (bad(inputs.rise)) problems.push('Rise: enter a number like 12, 12.5 or 12 1/2.');
-    if (bad(inputs.roll)) problems.push('Roll: enter a number like 9, 9.25 or 9 1/4.');
-    if (!emt && bad(inputs.takeoff)) problems.push('Take-off: enter a number like 3/8 or 0.375.');
-    if (emt && bad(inputs.mark1)) problems.push('First mark: enter a number like 10 or 10 1/2.');
+    const hint = (a: string, b: string) => (mm() ? `enter a number like ${a}.` : `enter a number like ${b}.`);
+    if (bad(inputs.rise)) problems.push('Rise: ' + hint('305 or 305.5', '12, 12.5 or 12 1/2'));
+    if (bad(inputs.roll)) problems.push('Roll: ' + hint('230 or 230.5', '9, 9.25 or 9 1/4'));
+    if (!emt && bad(inputs.takeoff)) problems.push('Take-off: ' + hint('9.5', '3/8 or 0.375'));
+    if (!emt && bad(inputs.fit)) problems.push('Room for the run: ' + hint('450', '18 or 18 1/2'));
+    if (emt && bad(inputs.mark1)) problems.push('First mark: ' + hint('250', '10 or 10 1/2'));
     if (angleBad) problems.push('Angle: use a number above 0 and below 90.');
     $('err').textContent = problems.join(' ');
     customAngle.setAttribute('aria-invalid', String(angleBad && customAngle.value.trim() !== ''));
@@ -392,53 +467,87 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
       note = problems.length ? 'Fix the field marked in red to see the answers.' : 'Enter a rise and a roll to see the answers.';
       lastText = '';
       drawDiagram(null, 0, 0, emt);
+      drawAlts(null, 0, 0, emt, angle);
     } else {
-      set('offset', fmt(c.trueOffset).text, fmt(c.trueOffset).dec + ' in');
-      set('travel', fmt(c.travel).text, fmt(c.travel).dec + ' in');
+      set('offset', lens(c.trueOffset).text, lens(c.trueOffset).sub);
+      set('travel', lens(c.travel).text, lens(c.travel).sub);
       const tilt = c.offsetAngle.toFixed(1) + '°';
       if (emt) {
         set('run', c.multiplier.toFixed(3), 'travel = true offset x this');
-        set('key', fmt(c.shrink).text, fmt(c.shrink).dec + ' in');
-        rows.push(['Shrink per inch of offset', c.shrinkPerInch.toFixed(3) + ' in']);
+        set('key', lens(c.shrink).text, lens(c.shrink).sub);
+        rows.push(['Shrink per inch of offset', c.shrinkPerInch.toFixed(3) + (mm() ? ' mm per mm' : ' in')]);
         if (Number.isFinite(c.mark1)) { rows.push(['Mark 1', q(c.mark1)]); rows.push(['Mark 2 (mark 1 + distance)', q(c.mark2)]); }
         rows.push(['Bend plane tilt from rise', tilt]);
-        note = `Both bends lie in one plane, tilted ${tilt} from the rise direction. Make bend 1, turn the conduit 180°, then make bend 2 ${fmt(c.travel).text} from the first. Add ${fmt(c.shrink).text} of shrink to your overall length.`;
+        note = `Both bends lie in one plane, tilted ${tilt} from the rise direction. Make bend 1, turn the conduit 180°, then make bend 2 ${lens(c.travel).text} from the first. Add ${lens(c.shrink).text} of shrink to your overall length.`;
       } else {
-        set('run', fmt(c.run).text, fmt(c.run).dec + ' in');
-        set('key', fmt(c.cut).text, fmt(c.cut).dec + ' in');
+        set('run', lens(c.run).text, lens(c.run).sub);
+        set('key', lens(c.cut).text, lens(c.cut).sub);
         if (c.takeoff > 0) rows.push(['Take-off per fitting', tk(c.takeoff)]);
-        rows.push(['Fitting angle', (Math.round(angle * 100) / 100) + '°']);
+        rows.push(['Fitting angle', deg(angle) + '°']);
+        const fromLevel = fittingRoll(rise, roll);
+        rows.push(['Roll the fittings to', `${fromLevel.toFixed(1)}° from level (${c.offsetAngle.toFixed(1)}° from plumb)`]);
+        if (Number.isFinite(fitV) && fitV > 0) {
+          const f = fitsInRun(rise, roll, angle, fitV, PRESETS.pipe);
+          rows.push([f.room >= 0 ? 'Room left over' : 'Short by', q(Math.abs(f.room))]);
+          rows.push(['Shallowest fitting that fits', f.shallowest === null ? 'None of 22.5°, 45°, 60°' : f.shallowest + '°']);
+        }
         const missing = materialById(material.value) && Number.isNaN(takeoffFor(material.value, size.value, angle));
         note = missing ? 'No catalog take-off at this angle, so cut length equals travel until you type your own take-off.'
           : c.takeoff > 0 ? (c.cut <= 0 ? 'The take-offs are longer than the travel. Check the numbers.' : `Cut length is the travel minus two take-offs of ${tk(c.takeoff)}.`)
           : 'No take-off set, so cut length equals travel (center to center). Pick a pipe and size to subtract the fittings.';
+        note += ` Turn each fitting around the pipe so its bend plane tilts ${fromLevel.toFixed(1)}° from level.`;
       }
       lastText = [
-        `Rolling offset (${emt ? 'EMT conduit' : 'pipe'}): rise ${fmt(rise).frac}", roll ${fmt(roll).frac}", ${Math.round(angle * 100) / 100} degrees`,
+        `Rolling offset (${emt ? 'EMT conduit' : 'pipe'}): rise ${lab(rise)}, roll ${lab(roll)}, ${deg(angle)} degrees`,
         `True offset: ${q(c.trueOffset)}`,
         emt ? `Distance between bends: ${q(c.travel)}` : `Travel: ${q(c.travel)}`,
         emt ? `Multiplier: ${c.multiplier.toFixed(3)}` : `Run: ${q(c.run)}`,
         emt ? `Total shrink: ${q(c.shrink)}` : `Cut length: ${q(c.cut)}${c.takeoff > 0 ? ` (take-off ${tk(c.takeoff)} per fitting)` : ''}`,
-      ].join('\n');
+        emt ? '' : `Roll the fittings to ${fittingRoll(rise, roll).toFixed(1)} degrees from level`,
+      ].filter(Boolean).join('\n');
       drawDiagram(c, rise, roll, emt);
+      drawAlts(c, rise, roll, emt, angle);
     }
     $('extra').innerHTML = rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
     $('note').textContent = note;
     updateSummary(c, emt);
+    syncUrl();
     save();
+  }
+
+  /** "Same offset with other fittings": travel and run at each common angle. */
+  function drawAlts(c: ReturnType<typeof calculate>, rise: number, roll: number, emt: boolean, angle: number) {
+    const head = document.querySelector('#alts thead')!, body = document.querySelector('#alts tbody')!;
+    if (!c) { head.innerHTML = ''; body.innerHTML = ''; $('alts-cap').textContent = ''; return; }
+    const angles = emt ? PRESETS.emt : [22.5, 30, 45, 60];
+    $('alts-cap').textContent = emt ? 'Same offset at other bend angles' : 'Same offset with other fittings';
+    head.innerHTML = `<tr><th scope="col">Angle</th><th scope="col">${emt ? 'Between bends' : 'Travel'}</th><th scope="col">${emt ? 'Multiplier' : 'Run'}</th></tr>`;
+    body.innerHTML = alternatives(rise, roll, angles).map((r) =>
+      `<tr${r.angle === angle ? ' class="cur"' : ''}><td>${r.angle}°</td><td>${lens(r.travel).text}</td><td>${emt ? r.multiplier.toFixed(3) : lens(r.run).text}</td></tr>`).join('');
+  }
+
+  /** Keep the numbers in the address bar so the link can be texted. Skipped on job pages (they start fresh). */
+  function shareQuery(): string {
+    const a = st.angle[st.mode];
+    return encodeShare({ mode: st.mode, unit: st.unit, rise: inputs.rise.value, roll: inputs.roll.value, angleText: Number.isFinite(a) ? String(a) : st.customText[st.mode],
+      material: material.value, size: size.value, takeoff: st.mode === 'pipe' ? inputs.takeoff.value : '', mark1: st.mode === 'emt' ? inputs.mark1.value : '', fit: st.mode === 'pipe' ? inputs.fit.value : '' });
+  }
+  function syncUrl() {
+    try { history.replaceState(null, '', location.pathname + location.search + '#' + shareQuery()); } catch {}
+    $('print-url').textContent = location.href;
   }
 
   /** Phone bar and screen reader line. The screen reader line waits for a pause in typing. */
   function updateSummary(c: ReturnType<typeof calculate>, emt: boolean) {
     $('s-l2').textContent = emt ? 'Between bends' : 'Travel';
     $('s-l3').textContent = emt ? 'Total shrink' : 'Cut length';
-    $('s-v1').textContent = c ? fmt(c.trueOffset).text : '–';
-    $('s-v2').textContent = c ? fmt(c.travel).text : '–';
-    $('s-v3').textContent = c ? fmt(emt ? c.shrink : c.cut).text : '–';
+    $('s-v1').textContent = c ? lens(c.trueOffset).text : '–';
+    $('s-v2').textContent = c ? lens(c.travel).text : '–';
+    $('s-v3').textContent = c ? lens(emt ? c.shrink : c.cut).text : '–';
     clearTimeout(srTimer);
     srTimer = window.setTimeout(() => {
-      $('sr-summary').textContent = c ? (emt ? `True offset ${fmt(c.trueOffset).text}. Distance between bends ${fmt(c.travel).text}. Total shrink ${fmt(c.shrink).text}.`
-        : `True offset ${fmt(c.trueOffset).text}. Travel ${fmt(c.travel).text}. Cut length ${fmt(c.cut).text}.`) : '';
+      $('sr-summary').textContent = c ? (emt ? `True offset ${lens(c.trueOffset).text}. Distance between bends ${lens(c.travel).text}. Total shrink ${lens(c.shrink).text}.`
+        : `True offset ${lens(c.trueOffset).text}. Travel ${lens(c.travel).text}. Cut length ${lens(c.cut).text}.`) : '';
     }, 500);
   }
   // Show the phone bar only while the calculator is on screen and its own results are not.
@@ -478,11 +587,11 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
     const T = (p: number[], dx: number, dy: number, anchor: string, k: string, v: string, color: string) =>
       `<text x="${(p[0] + dx).toFixed(1)}" y="${(p[1] + dy).toFixed(1)}" text-anchor="${anchor}"><tspan class="k">${k} </tspan><tspan class="v" style="fill:${color}">${v}</tspan></text>`;
     labels.innerHTML =
-      (roll > 0 ? T(mid(start, afterRoll), 0, 20, 'middle', 'Roll', fmt(roll).frac + '"', 'var(--c-roll)') : '') +
-      (rise > 0 ? T(mid(afterRoll, afterRise), 10, 5, 'start', 'Rise', fmt(rise).frac + '"', 'var(--c-rise)') : '') +
-      T(mid(afterRise, end), -6, -8, 'end', 'Run', fmt(c.run).frac + '"', 'var(--c-run)') +
-      T(mid(start, afterRise), -9, -7, 'end', 'True offset', fmt(c.trueOffset).frac + '"', 'var(--c-offset)') +
-      T([start[0] + 0.7 * (end[0] - start[0]), start[1] + 0.7 * (end[1] - start[1])], 12, 20, 'start', emt ? 'Between bends' : 'Travel', fmt(c.travel).frac + '"', 'var(--ink)');
+      (roll > 0 ? T(mid(start, afterRoll), 0, 20, 'middle', 'Roll', lab(roll), 'var(--c-roll)') : '') +
+      (rise > 0 ? T(mid(afterRoll, afterRise), 10, 5, 'start', 'Rise', lab(rise), 'var(--c-rise)') : '') +
+      T(mid(afterRise, end), -6, -8, 'end', 'Run', lab(c.run), 'var(--c-run)') +
+      T(mid(start, afterRise), -9, -7, 'end', 'True offset', lab(c.trueOffset), 'var(--c-offset)') +
+      T([start[0] + 0.7 * (end[0] - start[0]), start[1] + 0.7 * (end[1] - start[1])], 12, 20, 'start', emt ? 'Between bends' : 'Travel', lab(c.travel), 'var(--ink)');
     fitLabels(labels);
   }
 
@@ -530,9 +639,23 @@ const fracs = ['1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
     setTimeout(() => { $('copied').textContent = ''; }, 2000);
   });
 
+  $('share').addEventListener('click', async () => {
+    syncUrl();
+    let ok = false;
+    try { await navigator.clipboard.writeText(location.href); ok = true; } catch {
+      const t = document.createElement('textarea'); t.value = location.href; document.body.appendChild(t); t.select();
+      try { ok = document.execCommand('copy'); } catch {} t.remove();
+    }
+    $('copied').textContent = ok ? 'Link copied' : 'Copy failed';
+    setTimeout(() => { $('copied').textContent = ''; }, 2000);
+  });
+  $('print').addEventListener('click', () => { syncUrl(); window.print(); });
+
   // ---- start
   load();
+  applyUnitUi();
   fillSizes();
+  onTakeoffSource();
   root.dataset.mode = st.mode;
   document.querySelectorAll<HTMLButtonElement>('[data-mode-btn]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.modeBtn === st.mode)));
   renderAngles();

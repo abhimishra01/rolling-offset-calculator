@@ -101,15 +101,21 @@ export function offsetAngle(rise, roll) { return Math.atan2(roll, rise) / RAD; }
  */
 export const TAKEOFF = [
   {
-    id: 'pvc', label: 'PVC Sch 40', source: 'Spears series 417, 45° socket elbow, column J', defaultSize: '3/4', onlyAt45: true,
+    id: 'pvc', label: 'PVC Sch 40', source: 'Spears series 417, 45° socket elbow, column J',
+    links: [['Spears PVC Sch 40 fittings catalog (parts 417-005 to 417-100, column J)', 'https://www.spearsmfg.com/super_sourcebook/SSB-1%20Part%202%20Technical%20Information%20Catalog/003%20PVC%20White%20Schedule%2040%20Fittings,%20Unions,%20Saddles.pdf']],
+    defaultSize: '3/4', onlyAt45: true,
     sizes: [['1/2', 11 / 32], ['3/4', 7 / 16], ['1', 15 / 32], ['1-1/2', 19 / 32], ['2', 11 / 16], ['3', 27 / 32], ['4', 1 + 3 / 32]],
   },
   {
-    id: 'copper', label: 'Copper, solder', source: 'NIBCO 606, 45° wrought elbow, dimension C', defaultSize: '3/4', onlyAt45: true,
+    id: 'copper', label: 'Copper, solder', source: 'NIBCO 606, 45° wrought elbow, dimension C',
+    links: [['NIBCO 606 wrought copper 45° elbow, dimension C (catalog page 11, revision 5/9/2013)', 'https://static.au-uw2-stg.autodesk.com/MSF11653_additional_11653_Nibco_20607.pdf']],
+    defaultSize: '3/4', onlyAt45: true,
     sizes: [['1/2', 9 / 32], ['3/4', 11 / 32], ['1', 3 / 8], ['1-1/4', 17 / 32], ['1-1/2', 19 / 32], ['2', 25 / 32], ['2-1/2', 29 / 32], ['3', 1 + 1 / 8], ['4', 1 + 9 / 16]],
   },
   {
-    id: 'steel', label: 'Steel, butt weld', source: 'ASME B16.9 long radius 45° elbow, center to end', defaultSize: '2', onlyAt45: false,
+    id: 'steel', label: 'Steel, butt weld', source: 'ASME B16.9 long radius 45° elbow, center to end',
+    links: [['Texas Flange table, 45° long radius elbow (inches)', 'https://texasflange.com/butt-weld-fittings/elbow-45-long-radius/'], ['Wermac table, elbow dimension A (mm)', 'https://www.wermac.org/fittings/dim_elbows_a.html']],
+    defaultSize: '2', onlyAt45: false,
     sizes: [['1', 7 / 8], ['1-1/4', 1], ['1-1/2', 1 + 1 / 8], ['2', 1 + 3 / 8], ['2-1/2', 1 + 3 / 4], ['3', 2], ['4', 2.5], ['6', 3.75]],
   },
 ];
@@ -160,4 +166,47 @@ export function calculate({ rise, roll, angle, takeoff = 0, firstMark = NaN }) {
     offsetAngle: offsetAngle(rise, roll),
     mark1, mark2: Number.isFinite(mark1) ? mark1 + tr : NaN,
   };
+}
+
+/** Date the formulas and the take-off sources were last checked. Shown on the page. */
+export const LAST_CHECKED = 'October 20, 2026';
+
+export const INCH_MM = 25.4;
+
+/** Parse millimeters ("305", "305.5", "305,5", "305 mm") into inches. NaN when it is not a length. */
+export function parseMm(input) {
+  const s = String(input ?? '').trim().replace(/\s*mm$/i, '').replace(',', '.').trim();
+  if (!/^(\d+\.?\d*|\.\d+)$/.test(s)) return NaN;
+  const v = parseFloat(s) / INCH_MM;
+  return v <= MAX_LENGTH ? v : NaN;
+}
+
+/** Format inches as millimeters, one decimal ("381.0 mm"). */
+export function formatMm(x) {
+  if (!Number.isFinite(x)) return { text: '', num: '' };
+  const num = Math.abs(x * INCH_MM).toFixed(1);
+  const neg = x < 0 && +num !== 0;
+  return { text: `${neg ? '-' : ''}${num} mm`, num: (neg ? '-' : '') + num };
+}
+
+/**
+ * Where to rotate each fitting around the pipe: the angle of the offset plane up from level.
+ * Both fittings lie in the plane that holds the true offset. 12 rise and 9 roll give 53.1 degrees.
+ */
+export function fittingRoll(rise, roll) { return Math.atan2(rise, roll) / RAD; }
+
+/** Travel, run and multiplier for the same offset at several angles. */
+export function alternatives(rise, roll, angles) {
+  return angles.map((angle) => ({ angle, travel: travel(rise, roll, angle), run: run(rise, roll, angle), multiplier: multiplier(angle) }));
+}
+
+/**
+ * Does the offset fit in the room you have? room = available run - run at this angle (negative means short).
+ * shallowest = the smallest angle in the list whose run fits, or null when none does.
+ */
+export function fitsInRun(rise, roll, angle, available, angles) {
+  const t = trueOffset(rise, roll);
+  const room = available - t / Math.tan(angle * RAD);
+  const ok = [...angles].sort((a, b) => a - b).find((a) => t / Math.tan(a * RAD) <= available + 1e-9);
+  return { room, shallowest: ok ?? null };
 }

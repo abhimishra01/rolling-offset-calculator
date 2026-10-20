@@ -53,7 +53,8 @@ export function sanitizeSaved(raw) {
     mode: MODES.includes(raw.mode) ? raw.mode : 'pipe',
     angle: { ...DEFAULT_ANGLE },
     customText: { pipe: '', emt: '' },
-    rise: clip(raw.rise), roll: clip(raw.roll), takeoff: clip(raw.takeoff), mark1: clip(raw.mark1),
+    rise: clip(raw.rise), roll: clip(raw.roll), takeoff: clip(raw.takeoff), mark1: clip(raw.mark1), fit: clip(raw.fit),
+    unit: raw.unit === 'mm' ? 'mm' : 'in',
     material: '', size: clip(raw.size),
   };
   for (const m of MODES) {
@@ -66,4 +67,31 @@ export function sanitizeSaved(raw) {
   }
   if (raw.material === 'custom' || TAKEOFF.some((t) => t.id === raw.material)) out.material = raw.material;
   return out;
+}
+
+const SHARE_KEYS = { m: 'mode', r: 'rise', l: 'roll', t: 'takeoff', k: 'mark1', f: 'fit', u: 'unit', mat: 'material', sz: 'size' };
+
+/** Turn the form state into a short query string for the share link. Empty fields are left out. */
+export function encodeShare(s) {
+  const q = new URLSearchParams();
+  const put = (k, v) => { if (v !== undefined && v !== null && String(v).trim() !== '') q.set(k, String(v).trim()); };
+  put('m', s.mode); put('r', s.rise); put('l', s.roll); put('a', s.angleText);
+  put('u', s.unit === 'mm' ? 'mm' : ''); put('mat', s.material); put('sz', s.material && s.material !== 'custom' ? s.size : '');
+  put('t', s.takeoff); put('k', s.mark1); put('f', s.fit);
+  return q.toString();
+}
+
+/** Read a share link (the part after #) into the same shape sanitizeSaved checks. Returns null when it holds nothing. */
+export function decodeShare(hash) {
+  const q = new URLSearchParams(String(hash ?? '').replace(/^#/, ''));
+  if (![...q.keys()].length) return null;
+  const raw = { angle: {}, customText: {} };
+  for (const [k, name] of Object.entries(SHARE_KEYS)) if (q.has(k)) raw[name] = q.get(k);
+  const mode = MODES.includes(raw.mode) ? raw.mode : 'pipe';
+  const a = parseAngle(q.get('a'));
+  if (validAngle(a)) {
+    raw.angle[mode] = a;
+    if (!PRESETS[mode].includes(a)) raw.customText[mode] = String(q.get('a')).slice(0, 40);
+  }
+  return raw;
 }

@@ -187,4 +187,47 @@ test('default angles', () => {
   assert.deepEqual(f.DEFAULT_ANGLE, { pipe: 45, emt: 30 });
   assert.ok(f.PRESETS.pipe.includes(f.DEFAULT_ANGLE.pipe) && f.PRESETS.emt.includes(f.DEFAULT_ANGLE.emt));
 });
+test('fitting roll angle: 12 rise, 9 roll gives 53.1 from level and 36.9 from plumb', () => {
+  near(o.fittingRoll(12, 9), 53.1301, 0.001);
+  near(o.fittingRoll(12, 9) + o.offsetAngle(12, 9), 90, 1e-9);
+  near(o.fittingRoll(5, 5), 45, 1e-9);
+});
+test('same offset at other angles', () => {
+  const a = o.alternatives(12, 9, [22.5, 30, 45, 60]);
+  near(a[1].travel, 30, 1e-9);
+  near(a[2].travel, 21.2132, 0.0001);
+  near(a[2].run, 15, 1e-9);
+  near(a[3].multiplier, 1.1547, 0.0001);
+});
+test('fits in run: room left and shallowest fitting', () => {
+  let r = o.fitsInRun(12, 9, 45, 18, [22.5, 45, 60]);
+  near(r.room, 3, 1e-9);
+  assert.equal(r.shallowest, 45); // 22.5 needs 36.2 in
+  r = o.fitsInRun(12, 9, 45, 10, [22.5, 45, 60]);
+  near(r.room, -5, 1e-9);
+  assert.equal(o.fitsInRun(12, 9, 45, 5, [22.5, 45, 60]).shallowest, null);
+  assert.equal(r.shallowest, 60); // 60 deg needs 8.66 in
+});
+test('millimeters', () => {
+  near(o.parseMm('254'), 10, 1e-9);
+  near(o.parseMm('25,4 mm'), 1, 1e-9);
+  assert.ok(Number.isNaN(o.parseMm('12 1/2')));
+  assert.ok(Number.isNaN(o.parseMm('')));
+  assert.ok(Number.isNaN(o.parseMm('-3')));
+  assert.equal(o.formatMm(15).text, '381.0 mm');
+  assert.equal(o.formatMm(-0.0001).text, '0.0 mm');
+});
+test('every take-off table has a source link', () => {
+  for (const m of o.TAKEOFF) assert.ok(m.links.length && m.links.every(([label, href]) => label && href.startsWith('https://')), m.id);
+});
+test('share link round trip', () => {
+  const q = f.encodeShare({ mode: 'pipe', unit: 'in', rise: '12', roll: '9 1/2', angleText: '45', material: 'copper', size: '3/4', takeoff: '11/32', fit: '18' });
+  const s = f.sanitizeSaved(f.decodeShare('#' + q));
+  assert.deepEqual([s.mode, s.rise, s.roll, s.angle.pipe, s.material, s.size, s.takeoff, s.fit, s.unit], ['pipe', '12', '9 1/2', 45, 'copper', '3/4', '11/32', '18', 'in']);
+  const e = f.sanitizeSaved(f.decodeShare('#m=emt&u=mm&r=305&l=230&a=11.25&k=250'));
+  assert.deepEqual([e.mode, e.unit, e.rise, e.angle.emt, e.customText.emt, e.mark1], ['emt', 'mm', '305', 11.25, '11.25', '250']);
+  assert.equal(f.decodeShare(''), null);
+  const junk = f.sanitizeSaved(f.decodeShare('#m=zzz&a=999&mat=lead&u=km'));
+  assert.deepEqual([junk.mode, junk.angle.pipe, junk.material, junk.unit], ['pipe', 45, '', 'in']);
+});
 console.log(`\n${n} tests passed`);

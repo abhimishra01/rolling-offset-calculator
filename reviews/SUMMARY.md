@@ -57,3 +57,20 @@ GitHub Pages: `PAGES_BASE` and `PAGES_SITE` in astro.config, `url()` helper for 
 18. /3-4-inch-pvc-rolling-offset/ (per-size take-off pages)
 19. /rolling-offset-calculator-feet-and-inches/
 20. /rigid-and-imc-rolling-offset-calculator/
+
+## Gap fix (2026-10-20)
+Done:
+- Gap 1: "Roll the fittings to X degrees from level (Y from plumb)" row and note in pipe mode, and in the copied text.
+- Gap 2: kept the "no take-off set" hint; no silent default.
+- Gap 3: PVC, copper and steel values left unchanged (no citable error found). Each material now shows its source as a link in the article and on its job page (Spears 417 column J; NIBCO 606 dimension C, page 11; ASME B16.9 via Texas Flange and Wermac). Copper 1 inch (3/8) outlier is now stated on the page.
+- Gap 4: "Room for the run" input: room left over or short by, and the shallowest of 22.5, 45, 60 that fits.
+- Gap 5: Copy link (numbers kept in the URL hash, share link wins on load) and Print (job ticket layout, light colors).
+- Gap 6: in / mm toggle (math stays in inches; typed values convert on switch).
+- Gap 7: formula line and "last checked October 20, 2026" under the diagram.
+- Gaps 8 and 9: "Same offset with other fittings" table (22.5, 30, 45, 60; EMT angles in EMT mode).
+- 10 pre-rendered job pages (45, 30, 22.5, 60 degree; EMT; formula; multiplier chart; PVC; copper; steel) with presets, computed tables, worked examples, FAQ, breadcrumb and FAQ schema, linked from the home page and each other.
+- 7 new unit tests (33 total pass). Lighthouse 100/100/100/100 on home, copper and multiplier pages. Pages build stays noindex.
+Skipped:
+- 90 degree option: a 90 degree rolling offset has zero run and no meaning for this tool.
+- Named author and Organization schema: no real name to use. Drag-the-dot diagram: low value (gap 11).
+- EMT bend plane wording: no bender-maker source found (searched once); math is sound, wording unchanged. Still needs one electrician to read it.

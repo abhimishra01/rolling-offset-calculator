@@ -82,9 +82,9 @@ const cell = (id: string, size: string) => {
       </table>
     </div>
     <ul>
-      {TAKEOFF.map((m) => <li><strong>{m.label}:</strong> {m.source}.</li>)}
+      {TAKEOFF.map((m) => <li><strong>{m.label}:</strong> {m.source}. {m.links.map(([label, href], i) => <>{i > 0 && ' '}<a href={href} rel="noopener">{label}</a>.</>)}</li>)}
     </ul>
-    <p>PVC 1-1/4 and 2-1/2 inch are not listed because the printed catalog values did not fit the size pattern. Steel at angles other than 45 degrees is scaled from the 45 degree value, so treat it as approximate. Butt weld cut lengths also lose about 1/8 inch per joint to the root gap.</p>
+    <p>The copper 1 inch value (3/8) is as NIBCO prints it, but it sits low between the 3/4 and 1-1/4 inch values. Measure that fitting before you rely on it. PVC 1-1/4 and 2-1/2 inch are not listed because the printed catalog values did not fit the size pattern. Steel at angles other than 45 degrees is scaled from the 45 degree value, so treat it as approximate. Butt weld cut lengths also lose about 1/8 inch per joint to the root gap.</p>
 
     <h2>Rolling offset in EMT conduit</h2>
     <p>Conduit is bent, not fitted, so the rules change a little. The bender angle sets two numbers. The multiplier is one divided by the sine of the angle. Multiply the true offset by it to get the distance between the two bends. Shrink is the length the conduit loses when you bend it. It equals the true offset times the tangent of half the angle.</p>
