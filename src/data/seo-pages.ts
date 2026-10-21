@@ -1,6 +1,6 @@
 // Job pages: one real page per search topic. Every number below is computed from src/lib/offset.js,
 // so the text cannot drift from the tool. Each page has its own preset for the calculator.
-import { calculate, travel, run, multiplier, shrinkPerInch, formatInches, takeoffFor, materialById, TAKEOFF } from '../lib/offset.js';
+import { calculate, fittingRoll, travel, run, multiplier, shrinkPerInch, formatInches, takeoffFor, materialById, TAKEOFF } from '../lib/offset.js';
 import { fractionText } from '../lib/inputs.js';
 
 export interface Table { caption: string; head: string[]; rows: string[][]; }
@@ -55,6 +55,7 @@ function angleBlocks(angle: number, extra: Block[]): Block[] {
 }
 
 const ex45 = calculate({ rise: 12, roll: 9, angle: 45, takeoff: takeoffFor('copper', '3/4', 45) })!;
+const exF = calculate({ rise: 12, roll: 9, angle: 45 })!;
 const ex2pvc = calculate({ rise: 12, roll: 9, angle: 45, takeoff: takeoffFor('pvc', '2', 45) })!;
 const ex2steel = calculate({ rise: 12, roll: 9, angle: 45, takeoff: takeoffFor('steel', '2', 45) })!;
 
@@ -212,11 +213,69 @@ export const pages: SeoPage[] = [
           const c = calculate({ rise, roll, angle: 45 })!;
           return [`${rise}"`, `${roll}"`, `${D(c.trueOffset)}"`, `${T(c.travel)} (${D(c.travel)})`, `${T(c.run)}`, `${(Math.atan2(rise, roll) * 180 / Math.PI).toFixed(1)}° from level`];
         }) } },
+      { h: 'Rolling offset formula worked step by step', p: [
+        `Take a rise of 12 inches, a roll of 9 inches and 45 degree fittings. True offset = square root of (12 x 12 + 9 x 9) = square root of 225 = ${D(exF.trueOffset)} inches.`,
+        `Travel = ${D(exF.trueOffset)} / sin 45 = ${D(exF.travel)} inches, or about ${T(exF.travel)}. Run = ${D(exF.trueOffset)} / tan 45 = ${D(exF.run)} inches. For pipe, subtract the take-off of each fitting from the travel to get the cut length.`] },
       { h: 'The fitting roll angle', p: ['When you set the two fittings, they must lie in the plane of the true offset. For a rise of 12 and a roll of 9, that plane tilts 53.1 degrees from level, or 36.9 degrees from plumb. The tool shows both numbers.'] },
     ],
     faq: [
+      { q: 'How do you calculate a rolling offset?', a: `Find the true offset: the square root of rise squared plus roll squared. Divide it by the sine of the fitting angle to get the travel. For a 12 inch rise, a 9 inch roll and 45 degree fittings, the true offset is ${D(exF.trueOffset)} inches and the travel is ${D(exF.travel)} inches.` },
       { q: 'What is the rolling offset formula?', a: 'The true offset is the square root of rise squared plus roll squared. The travel is the true offset divided by the sine of the fitting angle.' },
       { q: 'Is the rolling offset formula the same for pipe and conduit?', a: 'Yes. Pipe adds a take-off for each fitting. Conduit adds shrink for the bends.' },
+    ],
+  },
+  {
+    slug: 'rolling-offset-example', label: 'Rolling offset example', title: 'Rolling Offset Example With Pipe Cut Lengths',
+    h1: 'Rolling Offset Example',
+    description: 'A rolling offset example worked in full for copper, PVC and steel pipe at 45 degrees, with true offset, travel, run and cut length.',
+    lead: 'One rise and roll, three pipe types. Check each number against the calculator.',
+    preset: { mode: 'pipe', angle: 45, material: 'copper', size: '3/4' },
+    blocks: [
+      { h: 'The job', p: ['A pipe must clear a duct. The rise is 12 inches and the roll is 9 inches. You use 45 degree fittings on both ends of the offset.'] },
+      { h: 'Rolling offset pipe example, step by step', ol: [
+        `True offset = square root of (12 squared + 9 squared) = ${D(exF.trueOffset)} inches.`,
+        `Travel = ${D(exF.trueOffset)} / sin 45 = ${D(exF.travel)} inches, or about ${T(exF.travel)}.`,
+        `Run = ${D(exF.trueOffset)} / tan 45 = ${D(exF.run)} inches. The offset uses up that much straight pipe.`,
+        'Look up the take-off of your fitting and subtract it twice, once for each end.'] },
+      { h: 'Cut length for three pipe types', p: ['Same offset, three materials. Only the take-off changes.'], table: {
+        caption: 'Cut length for a 12 inch rise and 9 inch roll at 45 degrees',
+        head: ['Pipe', 'Travel', 'Take-off each', 'Cut length'],
+        rows: [['3/4" copper', ex45, takeoffFor('copper', '3/4', 45)], ['2" PVC Sch 40', ex2pvc, takeoffFor('pvc', '2', 45)], ['2" steel, butt weld', ex2steel, takeoffFor('steel', '2', 45)]]
+          .map(([name, c, k]: [string, ReturnType<typeof calculate>, number]) => [name, `${T(c!.travel)} (${D(c!.travel)})`, `${T(k)} (${D(k)})`, `${T(c!.cut)} (${D(c!.cut)})`]) } },
+      { h: 'Check your own numbers', p: ['Change the rise, roll or size in the calculator above. The take-off values come from maker catalogs for 45 degree fittings. Steel butt weld joints also need a root gap, which you subtract yourself.'] },
+    ],
+    faq: [
+      { q: 'How do you calculate a rolling offset?', a: `Take the square root of rise squared plus roll squared to get the true offset. Divide that by the sine of the fitting angle to get the travel. Subtract the take-off of both fittings for the cut length.` },
+      { q: 'Does a rolling offset use the same fittings as a plain offset?', a: 'Yes. The fittings are the same. A rolling offset just turns the pair of fittings to a tilted plane, so the pipe moves up and sideways together.' },
+    ],
+  },
+  {
+    slug: 'how-to-do-a-rolling-offset', label: 'How to do a rolling offset', title: 'How to Do a Rolling Offset in Pipe and Conduit',
+    h1: 'How to Do a Rolling Offset',
+    description: 'How to do a rolling offset in pipe or EMT conduit: measure rise and roll, find the travel, cut and set the fittings. With a free calculator.',
+    lead: 'Follow the steps below. Enter your rise and roll in the calculator to get each number.',
+    preset: { mode: 'pipe', angle: 45 },
+    blocks: [
+      { h: 'Steps for pipe', ol: [
+        'Measure the rise and the roll from the center line of the first pipe to the center line of the second.',
+        'Pick the fitting angle. 45 degrees is the usual choice.',
+        'Find the true offset and the travel with the calculator.',
+        'Subtract the take-off of both fittings from the travel. The result is the cut length.',
+        'Cut the pipe and dry fit the two fittings.',
+        `Turn the fittings so they lie in the plane of the true offset. For a 12 inch rise and 9 inch roll, that plane tilts ${fittingRoll(12, 9).toFixed(1)} degrees from level.`,
+        'Mark the fittings and the pipe, then glue, solder or weld.'] },
+      { h: 'Steps for EMT conduit', ol: [
+        'Measure the rise and the roll, and switch the calculator to EMT conduit.',
+        'Pick the bender angle. 30 degrees has a multiplier of exactly 2.',
+        'Mark bend 1. Mark bend 2 the distance between bends from the first mark.',
+        'Make bend 1 with the plane at the tilt shown.',
+        'Turn the conduit 180 degrees and make bend 2 on its mark.',
+        'Add the shrink to your overall length before you cut.'] },
+      { h: 'Common mistakes', ul: ['Measuring to the edge of the pipe, not the center.', 'Using different angles on the two ends.', 'Forgetting the take-off, so the piece comes out too long.', 'Setting the fittings level or plumb, when they must lie in the tilted plane.'] },
+    ],
+    faq: [
+      { q: 'How do you calculate a rolling offset?', a: 'Find the true offset from the rise and roll, then divide it by the sine of the fitting angle. That gives the travel, the center to center length of the angled piece.' },
+      { q: 'What is the hardest part of a rolling offset?', a: 'Setting the fittings in the right plane. Both fittings must lie in the plane that holds the true offset, not level and not plumb.' },
     ],
   },
   {
