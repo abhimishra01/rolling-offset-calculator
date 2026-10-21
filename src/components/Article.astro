@@ -36,7 +36,7 @@ const cell = (id: string, size: string) => {
     <p>Most plumbers use 45 degree fittings. They are easy to stock, and they keep the offset short. A 22.5 degree fitting makes a long, gentle offset that is good for drain lines. A 60 degree fitting makes a short, steep offset when space is tight, but it slows the flow more. A smaller angle always makes a longer travel for the same offset. Try each angle in the tool and compare the run.</p>
 
     <h2>Rolling offset formula</h2>
-    <p>The math is right-triangle geometry. These are the steps the calculator follows.</p>
+    <p>The math is right-triangle geometry. This is the formula for a rolling offset, and these are the steps the calculator follows. See the full page on the rolling offset formula for shrink and the fitting roll angle.</p>
     <ul>
       <li>True offset = the square root of (rise squared + roll squared)</li>
       <li>Travel = true offset / sin(angle)</li>
@@ -45,6 +45,7 @@ const cell = (id: string, size: string) => {
     </ul>
 
     <h2>Rolling offset example in pipe</h2>
+    <p>This is a rolling offset pipe job from start to finish. The same steps show how to calculate a rolling offset by hand.</p>
     <p>A copper line must clear a duct. The rise is 12 inches and the roll is 9 inches. You use 45 degree fittings.</p>
     <ol>
       <li>True offset = the square root of (144 + 81) = 15 inches.</li>

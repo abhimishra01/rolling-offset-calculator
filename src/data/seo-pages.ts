@@ -192,7 +192,7 @@ export const pages: SeoPage[] = [
     slug: 'rolling-offset-formula', label: 'Rolling offset formula', title: 'Rolling Offset Formula and Calculator',
     h1: 'Rolling Offset Formula',
     description: 'The rolling offset formulas for true offset, travel, run, shrink and cut length, with worked examples and a free calculator.',
-    lead: 'Every formula below is in the calculator. Enter your rise and roll to check your own math.',
+    lead: 'This is the formula for a rolling offset, step by step. Every formula below is in the calculator. Enter your rise and roll to check your own math.',
     preset: { mode: 'pipe', angle: 45 },
     blocks: [
       { h: 'The formulas', ul: [
@@ -231,7 +231,7 @@ export const pages: SeoPage[] = [
     lead: 'One rise and roll, three pipe types. Check each number against the calculator.',
     preset: { mode: 'pipe', angle: 45, material: 'copper', size: '3/4' },
     blocks: [
-      { h: 'The job', p: ['A pipe must clear a duct. The rise is 12 inches and the roll is 9 inches. You use 45 degree fittings on both ends of the offset.'] },
+      { h: 'The job', p: ['This rolling offset pipe example shows how to calculate a rolling offset by hand. A pipe must clear a duct. The rise is 12 inches and the roll is 9 inches. You use 45 degree fittings on both ends of the offset.'] },
       { h: 'Rolling offset pipe example, step by step', ol: [
         `True offset = square root of (12 squared + 9 squared) = ${D(exF.trueOffset)} inches.`,
         `Travel = ${D(exF.trueOffset)} / sin 45 = ${D(exF.travel)} inches, or about ${T(exF.travel)}.`,
