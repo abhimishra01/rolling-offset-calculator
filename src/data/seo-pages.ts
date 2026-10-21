@@ -241,7 +241,7 @@ export const pages: SeoPage[] = [
         caption: 'Cut length for a 12 inch rise and 9 inch roll at 45 degrees',
         head: ['Pipe', 'Travel', 'Take-off each', 'Cut length'],
         rows: [['3/4" copper', ex45, takeoffFor('copper', '3/4', 45)], ['2" PVC Sch 40', ex2pvc, takeoffFor('pvc', '2', 45)], ['2" steel, butt weld', ex2steel, takeoffFor('steel', '2', 45)]]
-          .map(([name, c, k]: [string, ReturnType<typeof calculate>, number]) => [name, `${T(c!.travel)} (${D(c!.travel)})`, `${T(k)} (${D(k)})`, `${T(c!.cut)} (${D(c!.cut)})`]) } },
+          .map(([name, c, k]: [string, ReturnType<typeof calculate>, number]) => [name, `${T(c!.travel)} (${D(c!.travel)})`, `${fractionText(k)} (${k.toFixed(3)})`, `${T(c!.cut)} (${D(c!.cut)})`]) } },
       { h: 'Check your own numbers', p: ['Change the rise, roll or size in the calculator above. The take-off values come from maker catalogs for 45 degree fittings. Steel butt weld joints also need a root gap, which you subtract yourself.'] },
     ],
     faq: [
